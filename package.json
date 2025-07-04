@@ -11,12 +11,31 @@
         "@vitejs/plugin-vue": "^5.0.0",
         "autoprefixer": "^10.4.12",
         "axios": "^1.6.4",
+        "laravel-echo": "^1.17.0",
         "laravel-vite-plugin": "^1.0",
         "postcss": "^8.4.31",
+        "pusher-js": "^8.4.0-rc2",
         "tailwindcss": "^3.2.1",
+        "tailwindcss-animate": "^1.0.7",
         "typescript": "^5.0.2",
         "vite": "^5.0",
         "vue": "^3.4.0",
         "vue-tsc": "^1.8.27"
+    },
+    "dependencies": {
+        "@radix-icons/vue": "^1.0.0",
+        "@tanstack/vue-table": "^8.20.4",
+        "@vee-validate/zod": "^4.15.0",
+        "@vueuse/core": "^10.9.0",
+        "class-variance-authority": "^0.7.0",
+        "clsx": "^2.1.1",
+        "lucide-vue-next": "^0.376.0",
+        "radix-vue": "^1.7.3",
+        "tailwind-merge": "^2.3.0",
+        "vaul-vue": "^0.4.1",
+        "vee-validate": "^4.15.0",
+        "vue-sonner": "^1.2.5",
+        "xlsx": "^0.18.5",
+        "zod": "^3.24.2"
     }
 }
