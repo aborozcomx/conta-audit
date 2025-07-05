@@ -1,16 +1,16 @@
 [phases.setup]
 nixPkgs = [
-  "bash",                                # Para ejecutar /bin/bash
+  "bash",
+  "coreutils",
   "curl",
-  "wget",
+  "nginx",
+  "nodejs_20",
+  "openssl",
   "php83",
   "php83Packages.composer",
-  "php83Packages.php-fpm",
-  "nginx",
-  "nodejs_20",                           # Para ejecutar prestart.mjs
+  "php83Packages.php",
   "python311Packages.supervisor",
-  "coreutils",
-  "openssl"
+  "wget"
 ]
 
 [phases.build]
