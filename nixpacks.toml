@@ -1,13 +1,29 @@
 [phases.setup]
-nixPkgs = ["...", "python311Packages.supervisor"]
+nixPkgs = [
+  "bash",                         # Necesario si usas /bin/bash
+  "curl",
+  "wget",
+  "php83",
+  "php83Packages.composer",
+  "php83Packages.php-fpm",
+  "nginx",
+  "nodejs_20",                    # Asegura compatibilidad con scripts modernos
+  "python311Packages.supervisor",
+  "coreutils",
+  "openssl"                       # Laravel a veces lo necesita para encriptar claves
+]
 
 [phases.build]
 cmds = [
-    "mkdir -p /etc/supervisor/conf.d/",
-    "cp /assets/worker-*.conf /etc/supervisor/conf.d/",
-    "cp /assets/supervisord.conf /etc/supervisord.conf",
-    "chmod +x /assets/start.sh",
-    "..."
+  "mkdir -p /etc/supervisor/conf.d/",
+  "cp /assets/worker-*.conf /etc/supervisor/conf.d/",
+  "cp /assets/supervisord.conf /etc/supervisord.conf",
+  "chmod +x /assets/start.sh",
+  "composer install --no-dev --optimize-autoloader",
+  "php artisan config:cache",
+  "php artisan route:cache",
+  "php artisan view:cache",
+  "php artisan migrate --force"
 ]
 
 [start]
