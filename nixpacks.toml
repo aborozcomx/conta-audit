@@ -6,9 +6,9 @@ nixPkgs = [
   "nginx",
   "nodejs_20",
   "openssl",
-  "php82",                   # Versión más estable
+  "php82",
+  "php82Packages.fpm",  # Paquete corregido
   "php82Packages.composer",
-  "php82Extensions.fpm",     # Paquete explícito para php-fpm
   "python311Packages.supervisor",
   "wget"
 ]
@@ -25,6 +25,9 @@ cmds = [
   "php artisan view:cache",
   "php artisan migrate --force"
 ]
+
+[nixpkgs]
+channel = "nixos-23.11"
 
 [start]
 cmd = "/assets/start.sh"
