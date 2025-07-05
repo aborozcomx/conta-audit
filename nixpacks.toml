@@ -1,16 +1,16 @@
 [phases.setup]
 nixPkgs = [
-  "bash",                         # Necesario si usas /bin/bash
+  "bash",                                # Para ejecutar /bin/bash
   "curl",
   "wget",
   "php83",
   "php83Packages.composer",
   "php83Packages.php-fpm",
   "nginx",
-  "nodejs_20",                    # Asegura compatibilidad con scripts modernos
+  "nodejs_20",                           # Para ejecutar prestart.mjs
   "python311Packages.supervisor",
   "coreutils",
-  "openssl"                       # Laravel a veces lo necesita para encriptar claves
+  "openssl"
 ]
 
 [phases.build]
@@ -27,11 +27,11 @@ cmds = [
 ]
 
 [start]
-cmd = '/assets/start.sh'
+cmd = "/assets/start.sh"
 
 [staticAssets]
 "start.sh" = '''
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Transform the nginx configuration
 node /assets/scripts/prestart.mjs /assets/nginx.template.conf /etc/nginx.conf
@@ -93,7 +93,7 @@ autostart=true
 autorestart=true
 stopasgroup=true
 killasgroup=true
-numprocs=12 # To reduce memory/CPU usage, change to 2.
+numprocs=2
 startsecs=0
 stopwaitsecs=3600
 stdout_logfile=/var/log/worker-laravel.log
@@ -126,7 +126,7 @@ daemon off;
 worker_rlimit_nofile 8192;
 
 events {
-  worker_connections  4096;  # Default: 1024
+  worker_connections  4096;
 }
 
 http {
@@ -141,7 +141,7 @@ http {
     error_log /var/log/nginx-error.log;
     sendfile     on;
     tcp_nopush   on;
-    server_names_hash_bucket_size 128; # this seems to be required for some vhosts
+    server_names_hash_bucket_size 128;
 
     server {
         listen ${PORT};
@@ -155,22 +155,18 @@ http {
         )
 
         add_header X-Content-Type-Options "nosniff";
-
         client_max_body_size 35M;
-
         index index.php;
-
         charset utf-8;
-
 
         $if(NIXPACKS_PHP_FALLBACK_PATH) (
             location / {
                 try_files $uri $uri/ ${NIXPACKS_PHP_FALLBACK_PATH}?$query_string;
             }
         ) else (
-          location / {
+            location / {
                 try_files $uri $uri/ /index.php?$query_string;
-           }
+            }
         )
 
         location = /favicon.ico { access_log off; log_not_found off; }
