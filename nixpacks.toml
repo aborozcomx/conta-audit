@@ -6,8 +6,8 @@ nixPkgs = [
   "nginx",
   "nodejs_20",
   "openssl",
-  "php81",
-  "php81Packages.composer",
+  "php82",
+  "php82Packages.composer",
   "python311Packages.supervisor",
   "wget"
 ]
