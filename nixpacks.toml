@@ -6,9 +6,9 @@ nixPkgs = [
   "nginx",
   "nodejs_20",
   "openssl",
-  "php83",
-  "php83Packages.composer",
-  "php83Packages.php",
+  "php82",                   # Versión más estable
+  "php82Packages.composer",
+  "php82Extensions.fpm",     # Paquete explícito para php-fpm
   "python311Packages.supervisor",
   "wget"
 ]
