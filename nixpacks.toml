@@ -22,7 +22,7 @@ cmds = [
   "php artisan config:cache",
   "php artisan route:cache",
   "php artisan view:cache",
-  "php artisan horizon:install"
+  "php artisan horizon"
 ]
 
 [nixpkgs]
@@ -39,7 +39,7 @@ cmd = "/assets/start.sh"
 node /assets/scripts/prestart.mjs /assets/nginx.template.conf /etc/nginx.conf
 
 # Start supervisor
-supervisord -c /etc/supervisord.conf -n
+supervisord -c /etc/supervisord.conf
 '''
 
 "supervisord.conf" = '''
@@ -95,11 +95,11 @@ autostart=true
 autorestart=true
 stopasgroup=true
 killasgroup=true
-numprocs=2
+numprocs=8
 startsecs=0
 stopwaitsecs=3600
-stdout_logfile=/var/log/worker-laravel.log
-stderr_logfile=/var/log/worker-laravel.log
+stdout_logfile=/var/log/laravel-worker.log
+stderr_logfile=/var/log/laravel-worker.log
 '''
 
 "worker-horizon.conf" = '''
