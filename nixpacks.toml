@@ -108,7 +108,6 @@ process_name=%(program_name)s_horizon
 command=bash -c 'exec php /app/artisan horizon'
 autostart=true
 autorestart=true
-user=forge
 redirect_stderr=true
 stdout_logfile=/var/log/horizon.log
 stopwaitsecs=3600
