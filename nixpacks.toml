@@ -24,6 +24,11 @@ cmds = [
   "php artisan view:cache"
 ]
 
+[phases.install]
+cmds = [
+  "chmod +x /assets/start.sh"
+]
+
 [nixpkgs]
 channel = "nixos-23.11"
 
@@ -33,6 +38,7 @@ cmd = "/assets/start.sh"
 [staticAssets]
 "start.sh" = '''
 #!/usr/bin/env bash
+set -e
 
 # Transform the nginx configuration
 node /assets/scripts/prestart.mjs /assets/nginx.template.conf /etc/nginx.conf
@@ -51,7 +57,7 @@ logfile_maxbytes=50MB
 logfile_backups=10
 loglevel=info
 pidfile=/assets/supervisord.pid
-nodaemon=false
+nodaemon=true
 silent=false
 minfds=1024
 minprocs=200
@@ -102,7 +108,7 @@ stderr_logfile=/var/log/laravel-worker.log
 '''
 
 "worker-horizon.conf" = '''
-[program:worker-laravel]
+[program:worker-horizon]
 process_name=%(program_name)s_horizon
 command=php /app/artisan horizon
 autostart=true
