@@ -24,11 +24,6 @@ cmds = [
   "php artisan view:cache"
 ]
 
-[phases.install]
-cmds = [
-  "chmod +x /assets/start.sh"
-]
-
 [nixpkgs]
 channel = "nixos-23.11"
 
