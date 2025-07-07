@@ -15,6 +15,7 @@ class CategoryController extends Controller
      */
     public function index(): Response
     {
+        echo phpinfo();
         return inertia('Categories/Index', [
             'categories' => Category::all()
         ]);
