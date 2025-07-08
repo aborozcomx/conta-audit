@@ -90,7 +90,7 @@ stderr_logfile=/var/log/worker-phpfpm.log
 "worker-laravel.conf" = '''
 [program:worker-laravel]
 process_name=%(program_name)s_%(process_num)02d
-command=php /app/artisan queue:work
+command=php -d memory_limit=1024M /app/artisan queue:work
 autostart=true
 autorestart=true
 stopasgroup=true
@@ -105,7 +105,7 @@ stderr_logfile=/var/log/laravel-worker.log
 "worker-horizon.conf" = '''
 [program:worker-horizon]
 process_name=%(program_name)s_horizon
-command=php /app/artisan horizon
+command=php -d memory_limit=1024M /app/artisan horizon
 autostart=true
 autorestart=true
 redirect_stderr=true
