@@ -17,11 +17,6 @@ import {
             </NavigationMenuLink>
         </NavigationMenuItem>
         <NavigationMenuItem>
-            <NavigationMenuLink :href="route('variables.index')" :class="navigationMenuTriggerStyle()">
-                Variables
-            </NavigationMenuLink>
-        </NavigationMenuItem>
-        <NavigationMenuItem>
             <NavigationMenuLink :href="route('categories.index')" :class="navigationMenuTriggerStyle()">
                 Categorías
             </NavigationMenuLink>
