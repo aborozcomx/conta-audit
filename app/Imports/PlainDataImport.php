@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\Employee;
 use App\Models\EmployeeSalary;
 use App\Models\EmployeePayroll;
+use App\Models\EmployeePayrollConcept;
 use App\Models\Vacation;
 use App\Models\Uma;
 use Carbon\Carbon;
@@ -46,21 +47,21 @@ class PlainDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, Wi
                 ['rfc' => $row['rfc_receptor']],
                 [
                     'name' => $row['rfc_receptor'],
-                    'clave' => $row['num_empleado'],
-                    'puesto' => $row['puesto'] ?? 'N/A',
+                    'clave' => $row['numempleado'],
+                    'puesto' => $row['pueston'] ?? 'N/A',
                     'depto' => $row['departamento'] ?? 'N/A',
                     'curp' => '',
                     'age' => '',
-                    'start_date' => $row['fecha_inicio_relacion_laboral'],
-                    'number' => $row['num_empleado'],
-                    'social_number' => $row['no_seguro_social'],
-                    'base_salary' => $row['salario_base_cot_apor'],
-                    'daily_salary' => $row['salario_diario_integrado'],
+                    'start_date' => $row['fechainiciorellaboral'],
+                    'number' => $row['numempleado'],
+                    'social_number' => $row['numseguridadsocial'],
+                    'base_salary' => $row['salariobasecotapor'],
+                    'daily_salary' => $row['salariodiariointegrado'],
                     'company_id' => $company->id,
                 ]
             );
 
-            if ($row['periodicidad_pago'] == 4 || $row['periodicidad_pago'] == '04') {
+            if ($row['periodicidadpago'] == '04 - Quincenal' || $row['periodicidadpago'] == '04 - Quincenal') {
                 $year = $this->year;
                 $month = $this->getMonthFromPeriod($row['periodo']);
 
@@ -74,15 +75,15 @@ class PlainDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, Wi
                     return;
                 }
 
-                $daily_bonus = round($row['salario_base_cot_apor'] * $company->vacation_days / 365, 2);
-                $vacations_import = $row['salario_base_cot_apor'] * $vacation->days;
+                $daily_bonus = round($row['salariobasecotapor'] * $company->vacation_days / 365, 2);
+                $vacations_import = $row['salariobasecotapor'] * $vacation->days;
                 $vacation_bonus = round($vacations_import * ($company->vacation_bonus / 100) / 365, 2);
 
                 $yearUma = ((int) $row['periodo'] === 1) ? $year - 1 : $year;
                 $sdi_tope = Uma::where('year', $yearUma)->first();
                 $sdi_tope = $sdi_tope->balance * 25;
 
-                $sdi = round($row['salario_base_cot_apor'] + $daily_bonus + $vacation_bonus, 2);
+                $sdi = round($row['salariobasecotapor'] + $daily_bonus + $vacation_bonus, 2);
 
                 $salary = EmployeeSalary::where('year', $year)
                     ->where('period', $row['periodo'])
@@ -94,7 +95,7 @@ class PlainDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, Wi
                     'year' => $year,
                     'employee_id' => $employee->id,
                     'category_id' => 1,
-                    'daily_salary' => $row['salario_base_cot_apor'],
+                    'daily_salary' => $row['salariobasecotapor'],
                     'daily_bonus' => $daily_bonus,
                     'vacations_days' => $vacation->days,
                     'vacations_import' => $vacations_import,
@@ -112,18 +113,43 @@ class PlainDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, Wi
 
                 // Aquí agregas creación de nómina si la necesitas, igual que antes
                 $payroll = EmployeePayroll::create([
-                        'total' => 0, //$row['Total'],
+                        'total' => $row['total'],
                         'folio' => $row['folio'],
-                        'fecha_inicial' => '',//$row['Fecha inicial pago'],
-                        'fecha_final' => '',//$row['Fecha final pago'],
-                        'dias_pagados' => $row['dias_pagados'],
-                        'total_deduction' => 0, //$row['Total deducciones'],
-                        'total_others' => 0, //$row['Total otros pagos'],
-                        'total_perception' => 0, //$row['Total percepciones'],
-                        'total_salary' => 0, //$row['Total sueldos'],
+                        'fecha_inicial' => $row['fechainicialpago'],
+                        'fecha_final' => $row['fechafinalpago'],
+                        'dias_pagados' => $row['numdiaspagados'],
+                        'total_deduction' => $row['totaldeducciones'],
+                        'total_others' => $row['totalotrospagos'],
+                        'total_perception' => $row['totalpercepciones'],
+                        'total_salary' => $row['totalsueldosper'],
                         'period' => $row['periodo'],
                         'employee_id' => $employee->id,
+                        'subtotal' => $row['subtotal'],
+                        'descuento' => $row['descuento'],
+                        'moneda' => $row['moneda'],
                     ]);
+
+                    foreach ($row as $key => $value) {
+
+                        if (preg_match('/^p\d{2}_/', $key)) {
+                            $parts = explode('_', $key, 2);
+
+                            EmployeePayrollConcept::updateOrCreate([
+                                'employee_id' => $employee->id,
+                                'period' => $row['periodo'],
+                                'year' => $year,
+                            ], [
+                                'code' => $parts[0],
+                                'concepto' => $parts[1],
+                                'amount' => $value,
+                                'employee_payroll_id' => $payroll->id,
+                                'company_id' => $company->id,
+                                'is_exented' => false,
+                                'is_taxed' => false,
+                                'is_variable' => false,
+                            ]);
+                        }
+                    }
             }
         });
     }

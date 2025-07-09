@@ -10,6 +10,7 @@ class EmployeePayrollConcept extends Model
     use HasFactory;
 
     protected $fillable = [
+        'code',
         'concepto',
         'amount',
         'employee_payroll_id',
