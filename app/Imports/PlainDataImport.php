@@ -46,7 +46,7 @@ class PlainDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, Wi
             $employee = Employee::firstOrCreate(
                 ['rfc' => $row['rfc_receptor']],
                 [
-                    'name' => $row['rfc_receptor'],
+                    'name' => $row['nombrereceptor'],
                     'clave' => $row['numempleado'],
                     'puesto' => $row['pueston'] ?? 'N/A',
                     'depto' => $row['departamento'] ?? 'N/A',

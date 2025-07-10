@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/Components/ui/select'
 import Button from '@/Components/ui/button/Button.vue';
-
+import { toast } from 'vue-sonner'
 
 import { useForm,usePage } from '@inertiajs/vue3';
 
@@ -191,6 +191,15 @@ const handleClickExport = () => {
     window.open(URL)
 }
 
+const handleClickCalculate = () => {
+    formFilter.post(route('employees.calculate'),  {
+        onFinish: () => {
+            toast.success(page.props.flash.message);
+        },
+    })
+
+}
+
 
 </script>
 
@@ -264,6 +273,14 @@ const handleClickExport = () => {
                         variant="outline"
                         @click="handleClickExport">
                         Exportar
+
+                    </
+                    Button>
+                    <Button v-if="salaries.length > 0"
+                        class=" bg-blue-600 hover:bg-blue-400 text-slate-50 hover:text-slate-50"
+                        variant="outline"
+                        @click="handleClickCalculate">
+                        Calcular diferencia
 
                     </Button>
                 </div>

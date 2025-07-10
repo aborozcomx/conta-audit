@@ -21,6 +21,8 @@ use App\Exports\QuotasExport;
 use App\Exports\SalariesExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
+use App\Jobs\SendCfdiNotification;
+use App\Jobs\CalculateDifference;
 
 class EmployeeController extends Controller
 {
@@ -69,6 +71,26 @@ class EmployeeController extends Controller
             'company' => strval($company),
             'variables' => $variables
         ]);
+    }
+
+    public function calculate(Request $request, Employee $employee): RedirectResponse
+    {
+
+        $year = $request->year;
+        $period = $request->period;
+        $company = $request->company;
+
+        $message = [
+            'title' => 'SDI',
+            'content' => 'Se ha terminado el cálculo de SDI'
+        ];
+
+        CalculateDifference::withChain([
+             new SendCfdiNotification(auth()->user(), $message)
+        ])->dispatch( $company,$period, $year);
+
+
+        return redirect()->back()->with('message', 'Calculando diferencia...');
     }
 
     public function saveVariables(Request $request) {

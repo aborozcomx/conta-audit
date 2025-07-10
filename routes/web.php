@@ -55,6 +55,7 @@ Route::middleware('auth')->group(function () {
     Route::get('salaries/export', [EmployeeController::class, 'exportSalaries'])->name('employees.exportSalaries');
     Route::get('companies/{company}/patronals', [CompanyController::class, 'getCompanyPatronals'])->name('company.patronals');
     Route::get('companies/{company}/patronals/create', [CompanyController::class, 'createPatronal'])->name('company.createPatronal');
+    Route::post('calculate', [EmployeeController::class, 'calculate'])->name('employees.calculate');
 });
 
 
