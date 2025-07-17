@@ -18,6 +18,7 @@ class CalculateDifference implements ShouldQueue
 
 
     public $timeout = 1200;
+    public $tries = 10;
     /**
      * Create a new job instance.
      */

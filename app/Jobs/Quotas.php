@@ -23,6 +23,7 @@ class Quotas implements ShouldQueue
     private $year;
 
     public $timeout = 1200;
+    public $tries = 10;
 
     public function __construct($user, $file, $year)
     {
