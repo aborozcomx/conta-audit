@@ -57,7 +57,7 @@ const submit = () => {
 
             <div class="flex gap-3">
                 <div class="w-1/3 mb-3">
-                    <Label for="vacation_days">Dias de vacaciones</Label>
+                    <Label for="vacation_days">Min. Dias de aguinaldo</Label>
                     <Input id="vacation_days" type="text"  v-model.number="form.vacation_days"/>
                 </div>
 
