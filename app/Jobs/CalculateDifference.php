@@ -7,6 +7,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\CompanyVariable;
 use App\Models\EmployeeSalary;
+use App\Models\Company;
 
 class CalculateDifference implements ShouldQueue
 {
@@ -36,9 +37,11 @@ class CalculateDifference implements ShouldQueue
     public function handle(): void
     {
         $salaries = EmployeeSalary::with('employee')->where('year', $this->year)->where('period', $this->period)->whereRelation('employee', 'company_id', $this->company)->get();
-
+        $companySalary = Company::find($this->company);
 
         foreach($salaries as $salary) {
+            $daily_bonus = round($salary->daily_salary * $companySalary->vacation_days / 365, 2);
+
             $sdi_quoted = $salary->sdi_quoted;
             $sdi_aud = $salary->sdi_aud;
             $difference = round($sdi_aud - $sdi_quoted, 2);
@@ -46,6 +49,7 @@ class CalculateDifference implements ShouldQueue
             $salary->update([
                 'sdi_quoted' => $sdi_quoted,
                 'difference' => $difference,
+                'daily_bonus' => $daily_bonus,
             ]);
         }
     }
