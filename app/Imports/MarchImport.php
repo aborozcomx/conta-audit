@@ -28,12 +28,22 @@ class MarchImport implements ToCollection, WithHeadingRow, WithChunkReading, Wit
 
     public function collection(Collection $rows)
     {
-        // $grouped = $rows->groupBy('nss')->map(function ($row) {
-
-        //     return $row->sum(function ($employee) {
-        //         return $employee['cuota_imss'];
-        //     });
-        // });
+        $grouped = $rows->groupBy('nss')->map(function ($group) {
+            return [
+                'dias' => $group->sum(function ($item) {
+                    $value = $item['dias'] ?? 0;
+                    return is_numeric($value) ? intval($value) : 0;
+                }),
+                'aus' => $group->sum(function ($item) {
+                    $value = $item['aus'] ?? 0;
+                    return is_numeric($value) ? intval($value) : 0;
+                }),
+                'inc' => $group->sum(function ($item) {
+                    $value = $item['inc'] ?? 0;
+                    return is_numeric($value) ? intval($value) : 0;
+                })
+            ];
+        });
 
 
         foreach ($rows as $row) {
@@ -45,7 +55,7 @@ class MarchImport implements ToCollection, WithHeadingRow, WithChunkReading, Wit
 
 
                 if ($employee) {
-                    $days = $row['dias'];
+                    $days = $grouped[$row['nss']]['dias'];
                     $salary = $employee->employee_salaries->where('year', $year)->where('period', 3)->first();
 
                     if($salary) {
@@ -59,8 +69,8 @@ class MarchImport implements ToCollection, WithHeadingRow, WithChunkReading, Wit
                         ]);
 
                         $base_salary = $sdi_quoted; //$salary->sdi ?? 0;
-                        $absence = $row['aus'] ?? 0;
-                        $incapacity = $row['inc'] ?? 0;
+                        $absence = $grouped[$row['nss']]['aus'] ?? 0;
+                        $incapacity = $grouped[$row['nss']]['inc'] ?? 0;
 
                         $total_days = $days - $absence - $incapacity;
                         $difference_days = $days - $total_days;
@@ -81,17 +91,18 @@ class MarchImport implements ToCollection, WithHeadingRow, WithChunkReading, Wit
                         $disability_health = round($base_price_iv * .023750, 2);
                         $pensioners = round($base_price_em * .014250, 2);
 
-                        $risk = floatval($row['prima']) / 100;
+                        $risk = $row['prima'];
                         $risk_price = round($base_price_rt * $risk, 2);
                         $nurseries = round($base_price_rt * .01, 2);
 
                         $total_audit = $fixed_price + $sdmg + $in_cash + $disability_health + $pensioners + $risk_price + $nurseries;
 
                         $subtotal = $row['cuota_imss']; //$grouped[$row['nss']];
-                        $quota = EmployeeQuota::create([
+                        $quota = EmployeeQuota::updateOrCreate([
                             'period' => 3,
                             'year' => $year,
                             'employee_id' => $employee->id,
+                        ],[
                             'company_id' => $employee->company_id,
                             'base_salary' => $base_salary,
                             'days' => $days,
@@ -111,7 +122,7 @@ class MarchImport implements ToCollection, WithHeadingRow, WithChunkReading, Wit
                             'nurseries' => $nurseries,
                             'total_audit' => $total_audit,
                             'total_company' => $subtotal,
-                            'difference' => $total_audit - $subtotal
+                            'difference' => round($total_audit - $subtotal,2)
                         ]);
                     }
                 }
