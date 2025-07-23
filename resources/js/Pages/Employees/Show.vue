@@ -161,7 +161,7 @@ const columns: ColumnDef<EmployeeSalary>[] = [
         cell: ({ row }) => row.getValue('difference')
     }
 ]
-
+const page = usePage()
 const months = ["1","2","3","4","5","6","7","8","9","10","11","12"];
 
 const props = defineProps<{
@@ -194,7 +194,7 @@ const handleClickExport = () => {
 const handleClickCalculate = () => {
     formFilter.post(route('employees.calculate'),  {
         onFinish: () => {
-            toast.success(page.props.flash.message);
+            toast.info(page.props.flash.message);
         },
     })
 

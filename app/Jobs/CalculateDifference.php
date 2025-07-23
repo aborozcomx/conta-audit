@@ -42,14 +42,21 @@ class CalculateDifference implements ShouldQueue
         foreach($salaries as $salary) {
             $daily_bonus = round($salary->daily_salary * $companySalary->vacation_days / 365, 2);
 
+            $sdi = round($salary->daily_salary + $daily_bonus + $salary->vacation_bonus, 2);
+
+            $sdi_total = $sdi +  $salary->sdi_variable;
+            $sdi_aud = $sdi_total > $salary->sdi_limit ? $salary->sdi_limit : $sdi_total;
+
             $sdi_quoted = $salary->sdi_quoted;
-            $sdi_aud = $salary->sdi_aud;
             $difference = round($sdi_aud - $sdi_quoted, 2);
 
             $salary->update([
                 'sdi_quoted' => $sdi_quoted,
                 'difference' => $difference,
                 'daily_bonus' => $daily_bonus,
+                'sdi' => $sdi,
+                'total_sdi' => floatval(round($sdi_total, 2)),
+                'sdi_aud' => floatval(round($sdi_aud, 2)),
             ]);
         }
     }
