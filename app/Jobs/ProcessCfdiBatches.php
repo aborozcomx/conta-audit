@@ -23,7 +23,7 @@ class ProcessCfdiBatches implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 3;
+    public $tries = 25;
     public $timeout = 1200;
 
     public function __construct(public int $userId, public int $year, public Company $company) {}
