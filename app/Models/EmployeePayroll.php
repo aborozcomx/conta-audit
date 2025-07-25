@@ -24,7 +24,8 @@ class EmployeePayroll extends Model
         'total_perception',
         'total_salary',
         'period',
-        'employee_id'
+        'employee_id',
+        'company_id',
     ];
 
     public function employee_payrolls_concept(): HasMany

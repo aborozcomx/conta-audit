@@ -95,9 +95,17 @@ class CompanyController extends Controller
             'content' => 'Se ha terminado la importación de CFDIS'
         ];
 
-        ProcessCFDI::withChain([
-             new SendCfdiNotification(auth()->user(), $message)
-        ])->dispatch(auth()->user(), storage_path('app/' . $filePath), $request->year);
+        // ProcessCFDI::withChain([
+        //      new SendCfdiNotification(auth()->user(), $message)
+        // ])->dispatch(auth()->user(), storage_path('app/' . $filePath), $request->year);
+
+        ProcessCFDI::dispatch(
+            auth()->user(),
+            storage_path('app/' . $filePath),
+            $request->year,
+            $message,
+            $company
+        );
 
 
 

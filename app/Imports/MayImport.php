@@ -91,7 +91,7 @@ class MayImport implements ToCollection, WithHeadingRow, WithChunkReading, WithS
                         $disability_health = round($base_price_iv * .023750, 2);
                         $pensioners = round($base_price_em * .014250, 2);
 
-                        $risk = $row['prima'];
+                        $risk = $row['prima'] / 100;
                         $risk_price = round($base_price_rt * $risk, 2);
 
                         $nurseries = round($base_price_rt * .01, 2);

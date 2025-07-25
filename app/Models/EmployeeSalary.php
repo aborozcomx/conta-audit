@@ -27,6 +27,7 @@ class EmployeeSalary extends Model
         'sdi_aud',
         'sdi_quoted',
         'difference',
+        'company_id',
     ];
 
     public function employee(): BelongsTo

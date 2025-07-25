@@ -55,60 +55,6 @@ const handleFile = () => {
         },
     });
 }
-
-
-const encabezados = ref<string[]>([]);
-
-const encabezadosFiltrados = computed<string[]>(() => {
-  const result: string[] = [];
-  for (const header of encabezados.value) {
-    if (header.includes("IMSS")) {
-      break; // Detiene la iteración en "IMSS" sin agregarlo
-    }
-    if (header.includes("0")) {
-        const variable = header.split("/");
-      result.push(variable[variable.length - 1]); // Solo agrega si contiene "0"
-    }
-  }
-  return result;
-});
-
-const procesarArchivo = (event: Event): void => {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-
-  reader.onload = (e: ProgressEvent<FileReader>) => {
-    if (!e.target?.result) return;
-    const data = new Uint8Array(e.target.result as ArrayBuffer);
-    const workbook: XLSX.WorkBook = XLSX.read(data, { type: "array" });
-
-    // Obtener la primera hoja
-    const sheetName: string = workbook.SheetNames[0];
-    const sheet: XLSX.WorkSheet = workbook.Sheets[sheetName];
-
-    // Convertir la hoja en JSON
-    const jsonData: (string | undefined)[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-    // Guardar encabezados en el estado (verificamos que sean strings)
-    encabezados.value = jsonData[0]?.map(String) || [];
-  };
-
-  reader.readAsArrayBuffer(file);
-};
-
-const selectedItems = ref<string[]>([]);
-
-// Función para manejar la selección manualmente
-const toggleSelection = (concepto: string, checked: boolean) => {
-  if (checked) {
-    selectedItems.value.push(concepto);
-  } else {
-    selectedItems.value = selectedItems.value.filter((item) => item !== concepto);
-  }
-};
 </script>
 
 <template>
@@ -140,33 +86,11 @@ const toggleSelection = (concepto: string, checked: boolean) => {
             </div>
             <div class="grid w-full max-w-sm items-center gap-1.5 mb-3">
                 <Label for="picture">Seleccionar CFDIS</Label>
-                <Input id="file" type="file" @input="formFile.file = $event.target.files[0]" @change="procesarArchivo"/>
+                <Input id="file" type="file" @input="formFile.file = $event.target.files[0]"/>
                 <Button :disabled="!formFile.file" class=" self-end" @click="handleFile">Subir archivo</Button>
             </div>
 
 
         </div>
-          <!-- <div v-if="encabezadosFiltrados.length">
-            <div class="mx-auto w-full">
-                <h3 class="text-center">Encabezados del archivo:</h3>
-                <div class="p-4 pb-0">
-                    <div class="flex items-center justify-center flex-wrap gap-5">
-                        <div class="flex items-center space-x-2 w-1/6" v-for="(item, index) in encabezadosFiltrados" :key="index">
-                            <Checkbox
-                                :checked="selectedItems.includes(item)"
-                                @update:checked="(checked) => toggleSelection(item, checked)"
-                            />
-                            <label
-                                for="terms"
-                                class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                >
-                                {{ item }}
-                            </label>
-                        </div>
-                    </div>
-                    <Button class=" self-end" :disabled="selectedItems.length <= 0" @click="handleFile">Subir archivo</Button>
-                </div>
-            </div>
-        </div> -->
     </AuthenticatedLayout>
 </template>
