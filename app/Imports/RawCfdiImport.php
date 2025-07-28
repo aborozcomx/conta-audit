@@ -16,12 +16,14 @@ class RawCfdiImport implements OnEachRow, WithChunkReading, WithHeadingRow, Shou
     protected $year;
     protected $userId;
     protected $companyId;
+    protected $uuid;
 
-    public function __construct(int $year, int $userId, int $companyId)
+    public function __construct(int $year, int $userId, int $companyId, string $uuid)
     {
         $this->year = $year;
         $this->userId = $userId;
         $this->companyId = $companyId;
+        $this->uuid = $uuid;
     }
 
     public function onRow(Row $row)
@@ -35,6 +37,7 @@ class RawCfdiImport implements OnEachRow, WithChunkReading, WithHeadingRow, Shou
             'year' => $this->year,
             'user_id' => $this->userId,
             'company_id' => $this->companyId,
+            'uuid' => $this->uuid,
         ]);
     }
 

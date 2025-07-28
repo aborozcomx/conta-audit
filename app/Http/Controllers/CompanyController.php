@@ -17,6 +17,7 @@ use App\Jobs\SendCfdiNotification;
 use App\Models\EmployeePayroll;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Str;
 
 class CompanyController extends Controller
 {
@@ -90,6 +91,7 @@ class CompanyController extends Controller
     public function uploadFile(Request $request, Company $company)
     {
         $filePath = $request->file('file')->store('imports/cfdis');
+        $uuid = Str::uuid();
         $message = [
             'title' => 'CFDIS',
             'content' => 'Se ha terminado la importación de CFDIS'
@@ -104,7 +106,8 @@ class CompanyController extends Controller
             storage_path('app/' . $filePath),
             $request->year,
             $message,
-            $company
+            $company,
+            $uuid
         );
 
 

@@ -10,6 +10,7 @@ class CfdiImport extends Model
         'data',
         'user_id',
         'company_id',
-        'year'
+        'year',
+        'uuid'
     ];
 }

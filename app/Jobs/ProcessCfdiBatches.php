@@ -26,21 +26,17 @@ class ProcessCfdiBatches implements ShouldQueue
     public $tries = 25;
     public $timeout = 1200;
 
-    public function __construct(public int $userId, public int $year, public Company $company) {}
+    public function __construct(public int $userId, public int $year, public Company $company, public string $uuid) {}
 
     public function handle()
     {
         CfdiImport::where('user_id', $this->userId)
             ->where('year', $this->year)
             ->where('company_id', $this->company->id)
-            ->chunk(100, function (Collection $rows) {
-                foreach ($rows as $record) {
+            ->where('uuid', $this->uuid)
+            ->lazy()
+            ->each(function($record){
                     $row = json_decode($record->data, true);
-
-                    if (empty($row['uuid'])) {
-                        $record->delete();
-                        continue;
-                    }
 
                     $employee = Employee::firstOrCreate(
                         ['rfc' => $row['rfc_receptor']],
@@ -102,7 +98,8 @@ class ProcessCfdiBatches implements ShouldQueue
                             'sdi' => $sdi,
                             'total_sdi' => 0,
                             'sdi_limit' => $sdi_tope,
-                            'company_id' => $this->company->id
+                            'company_id' => $this->company->id,
+                            'variables' => $record->data,
                         ];
 
                         if (!$salary) {
@@ -154,7 +151,7 @@ class ProcessCfdiBatches implements ShouldQueue
                     }
 
                     //$record->delete();
-                }
+
             });
     }
 
