@@ -14,16 +14,18 @@ class QuotasExport implements FromView
 
     private $year;
     private $period;
+    private $company;
 
-    public function __construct(string $year, string $period)
+    public function __construct(string $year, string $period, string $company)
     {
         $this->year = $year;
         $this->period = $period;
+        $this->company = $company;
     }
 
     public function view(): View
     {
-        $quotas = EmployeeQuota::with('employee')->where('year', $this->year)->where('period', $this->period)->get();
+        $quotas = EmployeeQuota::with('employee')->where('year', $this->year)->where('period', $this->period)->where('company_id', $this->company)->get();
         return view('exports.quotas', [
             'quotas' => $quotas
         ]);

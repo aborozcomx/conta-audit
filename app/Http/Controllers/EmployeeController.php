@@ -165,23 +165,25 @@ class EmployeeController extends Controller
     {
         $year = $request->year;
         $period = $request->period;
+        $company = $request->company_id;
 
         $month = getMonths($period - 1);
 
 
 
-        return Excel::download(new QuotasExport($year, $period), 'IMSS.xlsx');
+        return Excel::download(new QuotasExport($year, $period, $company), 'IMSS.xlsx');
     }
 
     public function exportSalaries(Request $request)
     {
         $year = $request->year;
         $period = $request->period;
+        $company = $request->company_id;
 
         $month = getMonths($period - 1);
 
 
-        return Excel::download(new SalariesExport($year, $period), 'sdi.xlsx');
+        return Excel::download(new SalariesExport($year, $period, $company), 'sdi.xlsx');
     }
 
     public function create(): Response

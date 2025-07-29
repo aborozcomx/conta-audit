@@ -236,7 +236,7 @@ const handleClick = () => {
 }
 
 const handleClickExport = () => {
-    const URL = `${route('employees.exportQuotas')}?period=${formFilter.period}&year=${formFilter.year}`
+    const URL = `${route('employees.exportQuotas')}?period=${formFilter.period}&year=${formFilter.year}&company_id=${formFilter.company}`
     window.open(URL)
 }
 </script>
