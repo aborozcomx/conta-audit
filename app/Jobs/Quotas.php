@@ -21,15 +21,17 @@ class Quotas implements ShouldQueue
     private $user;
     private $file;
     private $year;
+    private $message;
 
     public $timeout = 1200;
-    public $tries = 10;
+    public $tries = 25;
 
-    public function __construct($user, $file, $year)
+    public function __construct($user, $file, $year, $message)
     {
         $this->user = $user;
         $this->file = $file;
         $this->year = $year;
+        $this->message = $message;
 
     }
 
@@ -38,6 +40,11 @@ class Quotas implements ShouldQueue
      */
     public function handle(): void
     {
-        $data = Excel::import(new VariableImport($this->year), $this->file);
+        Excel::queueImport(
+            new VariableImport($this->year),
+            $this->file
+        )->chain([
+            new SendCfdiNotification($this->user, $this->message),
+        ]);
     }
 }

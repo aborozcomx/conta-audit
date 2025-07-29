@@ -140,9 +140,16 @@ class CompanyController extends Controller
             'content' => 'Se ha terminado la importación de las cuotas IMSS'
         ];
 
-        Quotas::withChain([
-            new SendCfdiNotification(auth()->user(), $message)
-        ])->dispatch(auth()->user(), storage_path('app/' . $filePath), $request->year);
+        Quotas::dispatch(
+            auth()->user(),
+            storage_path('app/' . $filePath),
+            $request->year,
+            $message
+        );
+
+        // Quotas::withChain([
+        //     new SendCfdiNotification(auth()->user(), $message)
+        // ])->dispatch(auth()->user(), storage_path('app/' . $filePath), $request->year);
 
 
         return Redirect::route('employees.showQuotas')->with('message', 'Importando Cuotas IMSS');

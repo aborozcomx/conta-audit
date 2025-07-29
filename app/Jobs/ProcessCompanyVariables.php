@@ -17,7 +17,7 @@ class ProcessCompanyVariables implements ShouldQueue
 
 
     public $timeout = 1200;
-    public $tries = 10;
+    public $tries = 25;
     /**
      * Create a new job instance.
      */

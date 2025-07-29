@@ -4,8 +4,9 @@ namespace App\Imports;
 
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class VariableImport implements WithMultipleSheets, WithChunkReading
+class VariableImport implements WithMultipleSheets, WithChunkReading, ShouldQueue
 {
     /**
      * @param Collection $collection
@@ -22,21 +23,21 @@ class VariableImport implements WithMultipleSheets, WithChunkReading
         return [
             new JanuaryImport($this->year),
             new FebruaryImport($this->year),
-            new MarchImport($this->year),
-            new AprilImport($this->year),
-            new MayImport($this->year),
-            new JuneImport($this->year),
-            new JulyImport($this->year),
-            new AugustImport($this->year),
-            new SeptemberImport($this->year),
-            new OctoberImport($this->year),
-            new NovemberImport($this->year),
-            new DecemberImport($this->year),
+            // new MarchImport($this->year),
+            // new AprilImport($this->year),
+            // new MayImport($this->year),
+            // new JuneImport($this->year),
+            // new JulyImport($this->year),
+            // new AugustImport($this->year),
+            // new SeptemberImport($this->year),
+            // new OctoberImport($this->year),
+            // new NovemberImport($this->year),
+            // new DecemberImport($this->year),
         ];
     }
 
     public function chunkSize(): int
     {
-        return 1000;
+        return 500;
     }
 }

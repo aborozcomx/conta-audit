@@ -11,9 +11,9 @@ use App\Models\EmployeeQuota;
 use App\Models\Uma;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
-use Maatwebsite\Excel\Concerns\WithStartRow;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class MarchImport implements ToCollection, WithHeadingRow, WithChunkReading, WithStartRow
+class MarchImport implements ToCollection, WithHeadingRow, WithChunkReading, ShouldQueue
 {
     /**
      * @param Collection $collection
@@ -132,11 +132,6 @@ class MarchImport implements ToCollection, WithHeadingRow, WithChunkReading, Wit
 
     public function chunkSize(): int
     {
-        return 100;
-    }
-
-    public function startRow(): int
-    {
-        return 4;
+        return 500;
     }
 }
