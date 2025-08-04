@@ -6,7 +6,7 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class VariableImport implements WithMultipleSheets, WithChunkReading, ShouldQueue
+class VariableImport implements WithMultipleSheets, ShouldQueue, WithChunkReading
 {
     /**
      * @param Collection $collection
