@@ -127,6 +127,6 @@ class FebruaryImport implements WithHeadingRow, WithChunkReading, ShouldQueue, O
 
     public function chunkSize(): int
     {
-        return 500;
+        return 50;
     }
 }

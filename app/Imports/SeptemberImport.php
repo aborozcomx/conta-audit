@@ -127,6 +127,6 @@ class SeptemberImport implements OnEachRow, WithHeadingRow, WithChunkReading, Sh
 
     public function chunkSize(): int
     {
-        return 500;
+        return 50;
     }
 }

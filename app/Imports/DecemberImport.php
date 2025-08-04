@@ -129,6 +129,6 @@ class DecemberImport implements OnEachRow, WithHeadingRow, WithChunkReading, Sho
 
     public function chunkSize(): int
     {
-        return 500;
+        return 50;
     }
 }

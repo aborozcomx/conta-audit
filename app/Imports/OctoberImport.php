@@ -129,6 +129,6 @@ class OctoberImport implements OnEachRow, WithHeadingRow, WithChunkReading, Shou
 
     public function chunkSize(): int
     {
-        return 500;
+        return 50;
     }
 }

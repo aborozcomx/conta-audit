@@ -130,6 +130,6 @@ class MayImport implements OnEachRow, WithHeadingRow, WithChunkReading, ShouldQu
 
     public function chunkSize(): int
     {
-        return 500;
+        return 50;
     }
 }

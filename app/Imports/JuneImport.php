@@ -129,6 +129,6 @@ class JuneImport implements OnEachRow, WithHeadingRow, WithChunkReading, ShouldQ
 
     public function chunkSize(): int
     {
-        return 500;
+        return 50;
     }
 }

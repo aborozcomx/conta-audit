@@ -130,6 +130,6 @@ class JanuaryImport implements WithHeadingRow, WithChunkReading, ShouldQueue, On
 
     public function chunkSize(): int
     {
-        return 500;
+        return 50;
     }
 }

@@ -127,6 +127,6 @@ class AugustImport implements OnEachRow, WithHeadingRow, WithChunkReading, Shoul
 
     public function chunkSize(): int
     {
-        return 500;
+        return 50;
     }
 }

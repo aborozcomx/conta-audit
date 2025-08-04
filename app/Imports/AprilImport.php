@@ -126,6 +126,6 @@ class AprilImport implements OnEachRow, WithHeadingRow, WithChunkReading, Should
 
     public function chunkSize(): int
     {
-        return 500;
+        return 50;
     }
 }
