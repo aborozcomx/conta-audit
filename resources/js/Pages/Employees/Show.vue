@@ -127,7 +127,7 @@ const columns: ColumnDef<EmployeeSalary>[] = [
     },
     {
         accessorKey: 'sdi',
-        header: 'SDI',
+        header: 'SDI Fijo',
         cell: ({ row }) => row.getValue('sdi')
     },
     {

@@ -23,16 +23,16 @@ class VariableImport implements WithMultipleSheets, WithChunkReading, ShouldQueu
         return [
             new JanuaryImport($this->year),
             new FebruaryImport($this->year),
-            // new MarchImport($this->year),
-            // new AprilImport($this->year),
-            // new MayImport($this->year),
-            // new JuneImport($this->year),
-            // new JulyImport($this->year),
-            // new AugustImport($this->year),
-            // new SeptemberImport($this->year),
-            // new OctoberImport($this->year),
-            // new NovemberImport($this->year),
-            // new DecemberImport($this->year),
+            new MarchImport($this->year),
+            new AprilImport($this->year),
+            new MayImport($this->year),
+            new JuneImport($this->year),
+            new JulyImport($this->year),
+            new AugustImport($this->year),
+            new SeptemberImport($this->year),
+            new OctoberImport($this->year),
+            new NovemberImport($this->year),
+            new DecemberImport($this->year),
         ];
     }
 

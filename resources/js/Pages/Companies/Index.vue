@@ -90,10 +90,10 @@ const handleDelete = (id: number) => {
             <Link :href="route('companies.import', company.id)">Importar CFDIS</Link>
           </Button>
           <Button variant="outline" class="mr-3" as-child>
-            <Link :href="route('companies.importPayrolls', company.id)">Importar IMSS</Link>
+            <Link :href="route('companies.importVariables', company.id)">Importar Variables CIA</Link>
           </Button>
           <Button variant="outline" class="mr-3" as-child>
-            <Link :href="route('companies.importVariables', company.id)">Importar Variables CIA</Link>
+            <Link :href="route('companies.importPayrolls', company.id)">Importar IMSS</Link>
           </Button>
           <Button variant="outline" class="mr-3" as-child>
             <Link :href="route('companies.edit', company.id)">Editar</Link>
