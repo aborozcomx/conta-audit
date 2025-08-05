@@ -109,23 +109,23 @@ class ProcessCfdiBatches implements ShouldQueue
                         }
 
                         // Aquí agregas creación de nómina si la necesitas, igual que antes
-                        $payroll = EmployeePayroll::create([
-                                'total' => $row['total'],
-                                'folio' => $row['folio'],
-                                'fecha_inicial' => $row['fechainicialpago'],
-                                'fecha_final' => $row['fechafinalpago'],
-                                'dias_pagados' => $row['numdiaspagados'],
-                                'total_deduction' => $row['totaldeducciones'],
-                                'total_others' => $row['totalotrospagos'],
-                                'total_perception' => $row['totalpercepciones'],
-                                'total_salary' => $row['totalsueldosper'],
-                                'period' => $row['periodo'],
-                                'employee_id' => $employee->id,
-                                'subtotal' => $row['subtotal'],
-                                'descuento' => $row['descuento'],
-                                'moneda' => $row['moneda'],
-                                'company_id' => $this->company->id
-                            ]);
+                        // $payroll = EmployeePayroll::create([
+                        //         'total' => $row['total'],
+                        //         'folio' => $row['folio'],
+                        //         'fecha_inicial' => $row['fechainicialpago'],
+                        //         'fecha_final' => $row['fechafinalpago'],
+                        //         'dias_pagados' => $row['numdiaspagados'],
+                        //         'total_deduction' => $row['totaldeducciones'],
+                        //         'total_others' => $row['totalotrospagos'],
+                        //         'total_perception' => $row['totalpercepciones'],
+                        //         'total_salary' => $row['totalsueldosper'],
+                        //         'period' => $row['periodo'],
+                        //         'employee_id' => $employee->id,
+                        //         'subtotal' => $row['subtotal'],
+                        //         'descuento' => $row['descuento'],
+                        //         'moneda' => $row['moneda'],
+                        //         'company_id' => $this->company->id
+                        //     ]);
 
                             // foreach ($row as $key => $value) {
 
