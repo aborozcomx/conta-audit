@@ -56,7 +56,7 @@ class ProcessCfdiBatches implements ShouldQueue
                         ]
                     );
 
-                    if ($row['tiponomina'] == 'O - Ordinaria') {
+                    if ($row['tiponomina'] == 'O - Ordinaria' || $row['tiponomina'] == 'O') {
                         $year = $this->year;
                         $month = $this->getMonthFromPeriod($row['periodo']);
 
