@@ -38,6 +38,6 @@ class VariableImport implements WithMultipleSheets, ShouldQueue, WithChunkReadin
 
     public function chunkSize(): int
     {
-        return 500;
+        return 100;
     }
 }

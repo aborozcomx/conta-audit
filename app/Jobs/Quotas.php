@@ -8,8 +8,10 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Imports\VariableImport;
-
+use App\Imports\RawQuotasImport;
+use App\Jobs\ProcessQuotasBatches;
+use App\Jobs\SendCfdiNotification;
+use App\Jobs\TruncateCFDISImports;
 
 class Quotas implements ShouldQueue
 {
@@ -22,16 +24,20 @@ class Quotas implements ShouldQueue
     private $file;
     private $year;
     private $message;
+    private $company;
+    private $uuid;
 
     public $timeout = 1200;
     public $tries = 25;
 
-    public function __construct($user, $file, $year, $message)
+    public function __construct($user, $file, $year, $message, $company, $uuid)
     {
         $this->user = $user;
         $this->file = $file;
         $this->year = $year;
         $this->message = $message;
+        $this->company = $company;
+        $this->uuid = $uuid;
 
     }
 
@@ -41,10 +47,13 @@ class Quotas implements ShouldQueue
     public function handle(): void
     {
         Excel::queueImport(
-            new VariableImport($this->year),
+            //new RawQuotasImport($this->year),
+            new RawQuotasImport($this->year, $this->user->id, $this->company->id, $this->uuid),
             $this->file
         )->chain([
+            new ProcessQuotasBatches($this->user->id, $this->year, $this->company, $this->uuid),
             new SendCfdiNotification($this->user, $this->message),
+            new TruncateCFDISImports($this->year, $this->company, $this->uuid),
         ]);
     }
 }
