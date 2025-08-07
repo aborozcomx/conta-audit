@@ -90,7 +90,7 @@ stderr_logfile=/var/log/worker-phpfpm.log
 "worker-laravel.conf" = '''
 [program:worker-laravel]
 process_name=%(program_name)s_%(process_num)02d
-command=php -d memory_limit=1024M /app/artisan queue:work --sleep=5
+command=php -d memory_limit=1024M /app/artisan queue:work
 autostart=true
 autorestart=true
 stopasgroup=true
