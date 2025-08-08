@@ -119,6 +119,6 @@ class VariableImport implements ShouldQueue, WithChunkReading, OnEachRow, WithHe
 
     public function chunkSize(): int
     {
-        return 500;
+        return 250;
     }
 }
