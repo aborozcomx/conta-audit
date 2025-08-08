@@ -19,7 +19,6 @@ class CompanyVariable implements OnEachRow, WithHeadingRow
     {
         $row = $row->toArray();
 
-        //dd($row);
         $numeroPersonal = $row['numero_de_personal'] ?? null;
         $concepto = $row['texto_explcc_nomina'] ?? null;
         $importe = $row['importe'] ?? 0;
