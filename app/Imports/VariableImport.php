@@ -44,8 +44,8 @@ class VariableImport implements ShouldQueue, WithChunkReading, OnEachRow, WithHe
                 $salary = $employee->employee_salaries->first();
 
                 if($salary) {
-                    $sdi_quoted = $row['sdi'] || 0;
-                    $sdi_aud = $salary->sdi_aud || 0;
+                    $sdi_quoted = $row['sdi'];
+                    $sdi_aud = $salary->sdi_aud;
                     $difference = round($sdi_aud - $sdi_quoted, 2);
 
                     $salary->update([
