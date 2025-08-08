@@ -14,152 +14,96 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Row;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class PlainDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, WithStartRow
+class PlainDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, ShouldQueue
 {
     protected $year;
-    protected $companyCache = [];
+    protected $company;
     protected $vacationCache = [];
 
-    public function __construct($year)
+    public function __construct($year, $company)
     {
         $this->year = $year;
+        $this->company = $company;
     }
 
     public function onRow(Row $row)
     {
         $row = $row->toArray();
 
-        if (empty($row['uuid'])) {
-            return; // Ignorar filas sin UUID
-        }
+        $employee = Employee::firstOrCreate(
+            ['rfc' => $row['rfc_receptor']],
+            [
+                'name' => $row['nombrereceptor'],
+                'clave' => $row['numempleado'],
+                'puesto' => $row['pueston'] ?? 'N/A',
+                'depto' => $row['departamento'] ?? 'N/A',
+                'curp' => '',
+                'age' => '',
+                'start_date' => $row['fechainiciorellaboral'],
+                'number' => $row['numempleado'],
+                'social_number' => $row['numseguridadsocial'],
+                'base_salary' => $row['salariobasecotapor'],
+                'daily_salary' => $row['salariodiariointegrado'],
+                'company_id' => $this->company->id,
+            ]
+        );
 
-        DB::transaction(function () use ($row) {
-            $company = $this->getCompany($row['rfc_emisor']);
-            if (!$company) {
-                // Aquí puedes loggear o manejar el error si la compañía no existe
+        if ($row['tiponomina'] == 'O - Ordinaria' || $row['tiponomina'] == 'O') {
+            $year = $this->year;
+            $month = $this->getMonthFromPeriod($row['periodo']);
+
+            $carbon = new Carbon("last day of $month $year");
+            $start_date = new Carbon($employee->start_date);
+            $age = $carbon->diff($start_date);
+
+            $vacation = $this->getVacation($age->y);
+            if (!$vacation) {
+                // Maneja si no hay vacaciones definidas para ese año
                 return;
             }
 
-            $employee = Employee::firstOrCreate(
-                ['rfc' => $row['rfc_receptor']],
-                [
-                    'name' => $row['nombrereceptor'],
-                    'clave' => $row['numempleado'],
-                    'puesto' => $row['pueston'] ?? 'N/A',
-                    'depto' => $row['departamento'] ?? 'N/A',
-                    'curp' => '',
-                    'age' => '',
-                    'start_date' => $row['fechainiciorellaboral'],
-                    'number' => $row['numempleado'],
-                    'social_number' => $row['numseguridadsocial'],
-                    'base_salary' => $row['salariobasecotapor'],
-                    'daily_salary' => $row['salariodiariointegrado'],
-                    'company_id' => $company->id,
-                ]
-            );
+            $daily_bonus = round($row['salariobasecotapor'] * $this->company->vacation_days / 365, 2);
+            $vacations_import = $row['salariobasecotapor'] * $vacation->days;
+            $vacation_bonus = round($vacations_import * ($this->company->vacation_bonus / 100) / 365, 2);
 
-            if ($row['periodicidadpago'] == '04 - Quincenal' || $row['periodicidadpago'] == '04 - Quincenal') {
-                $year = $this->year;
-                $month = $this->getMonthFromPeriod($row['periodo']);
+            $yearUma = ((int) $row['periodo'] === 1) ? $year - 1 : $year;
+            $sdi_tope = Uma::where('year', $yearUma)->first();
+            $sdi_tope = $sdi_tope->balance * 25;
 
-                $carbon = new Carbon("last day of $month $year");
-                $start_date = new Carbon($employee->start_date);
-                $age = $carbon->diff($start_date);
+            $sdi = round($row['salariobasecotapor'] + $daily_bonus + $vacation_bonus, 2);
 
-                $vacation = $this->getVacation($age->y);
-                if (!$vacation) {
-                    // Maneja si no hay vacaciones definidas para ese año
-                    return;
-                }
+            $salary = EmployeeSalary::where('year', $year)
+                ->where('period', $row['periodo'])
+                ->where('employee_id', $employee->id)
+                ->first();
 
-                $daily_bonus = round($row['salariobasecotapor'] * $company->vacation_days / 365, 2);
-                $vacations_import = $row['salariobasecotapor'] * $vacation->days;
-                $vacation_bonus = round($vacations_import * ($company->vacation_bonus / 100) / 365, 2);
+            $salaryData = [
+                'period' => $row['periodo'],
+                'year' => $year,
+                'employee_id' => $employee->id,
+                'category_id' => 1,
+                'daily_salary' => $row['salariobasecotapor'],
+                'daily_bonus' => $daily_bonus,
+                'vacations_days' => $vacation->days,
+                'vacations_import' => $vacations_import,
+                'vacation_bonus' => $vacation_bonus,
+                'sdi' => $sdi,
+                'total_sdi' => 0,
+                'sdi_limit' => $sdi_tope,
+                'company_id' => $this->company->id,
+                'variables' => '{}',
+            ];
 
-                $yearUma = ((int) $row['periodo'] === 1) ? $year - 1 : $year;
-                $sdi_tope = Uma::where('year', $yearUma)->first();
-                $sdi_tope = $sdi_tope->balance * 25;
-
-                $sdi = round($row['salariobasecotapor'] + $daily_bonus + $vacation_bonus, 2);
-
-                $salary = EmployeeSalary::where('year', $year)
-                    ->where('period', $row['periodo'])
-                    ->where('employee_id', $employee->id)
-                    ->first();
-
-                $salaryData = [
-                    'period' => $row['periodo'],
-                    'year' => $year,
-                    'employee_id' => $employee->id,
-                    'category_id' => 1,
-                    'daily_salary' => $row['salariobasecotapor'],
-                    'daily_bonus' => $daily_bonus,
-                    'vacations_days' => $vacation->days,
-                    'vacations_import' => $vacations_import,
-                    'vacation_bonus' => $vacation_bonus,
-                    'sdi' => $sdi,
-                    'total_sdi' => 0,
-                    'sdi_limit' => $sdi_tope,
-                ];
-
-                if (!$salary) {
-                    EmployeeSalary::create($salaryData);
-                } else {
-                    $salary->update($salaryData);
-                }
-
-                // Aquí agregas creación de nómina si la necesitas, igual que antes
-                $payroll = EmployeePayroll::create([
-                        'total' => $row['total'],
-                        'folio' => $row['folio'],
-                        'fecha_inicial' => $row['fechainicialpago'],
-                        'fecha_final' => $row['fechafinalpago'],
-                        'dias_pagados' => $row['numdiaspagados'],
-                        'total_deduction' => $row['totaldeducciones'],
-                        'total_others' => $row['totalotrospagos'],
-                        'total_perception' => $row['totalpercepciones'],
-                        'total_salary' => $row['totalsueldosper'],
-                        'period' => $row['periodo'],
-                        'employee_id' => $employee->id,
-                        'subtotal' => $row['subtotal'],
-                        'descuento' => $row['descuento'],
-                        'moneda' => $row['moneda'],
-                    ]);
-
-                    foreach ($row as $key => $value) {
-
-                        if (preg_match('/^p\d{2}_/', $key)) {
-                            $parts = explode('_', $key, 2);
-
-                            EmployeePayrollConcept::updateOrCreate([
-                                'employee_id' => $employee->id,
-                                'period' => $row['periodo'],
-                                'year' => $year,
-                            ], [
-                                'code' => $parts[0],
-                                'concepto' => $parts[1],
-                                'amount' => $value,
-                                'employee_payroll_id' => $payroll->id,
-                                'company_id' => $company->id,
-                                'is_exented' => false,
-                                'is_taxed' => false,
-                                'is_variable' => false,
-                            ]);
-                        }
-                    }
+            if (!$salary) {
+                EmployeeSalary::create($salaryData);
+            } else {
+                $salary->update($salaryData);
             }
-        });
-    }
-
-    protected function getCompany($rfc)
-    {
-        if (!isset($this->companyCache[$rfc])) {
-            $this->companyCache[$rfc] = Company::where('rfc', $rfc)->first();
         }
-        return $this->companyCache[$rfc];
+
     }
 
     protected function getVacation($years)
@@ -183,10 +127,5 @@ class PlainDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, Wi
     public function chunkSize(): int
     {
         return 500; // reduce si sigue consumiendo mucha memoria
-    }
-
-    public function startRow(): int
-    {
-        return 2;
     }
 }

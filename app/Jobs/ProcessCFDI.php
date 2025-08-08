@@ -51,12 +51,11 @@ class ProcessCFDI implements ShouldQueue
     {
         //$data = Excel::import(new PlainDataImport($this->year), $this->file);
         Excel::queueImport(
-            new RawCfdiImport($this->year, $this->user->id, $this->company->id, $this->uuid),
+            //new RawCfdiImport($this->year, $this->user->id, $this->company->id, $this->uuid),
+            new PlainDataImport($this->year, $this->company),
             $this->file
         )->chain([
-            new ProcessCfdiBatches($this->user->id, $this->year, $this->company, $this->uuid),
             new SendCfdiNotification($this->user, $this->message),
-            new TruncateCFDISImports($this->year, $this->company, $this->uuid),
         ]);
     }
 }
