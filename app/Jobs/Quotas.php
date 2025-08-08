@@ -8,7 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Imports\RawQuotasImport;
+use App\Imports\VariableImport;
 use App\Jobs\ProcessQuotasBatches;
 use App\Jobs\SendCfdiNotification;
 use App\Jobs\TruncateCFDISImports;
@@ -48,12 +48,11 @@ class Quotas implements ShouldQueue
     {
         Excel::queueImport(
             //new RawQuotasImport($this->year),
-            new RawQuotasImport($this->year, $this->user->id, $this->company->id, $this->uuid),
+            //new RawQuotasImport($this->year, $this->user->id, $this->company->id, $this->uuid),
+            new VariableImport($this->year),
             $this->file
         )->chain([
-            new ProcessQuotasBatches($this->user->id, $this->year, $this->company, $this->uuid),
             new SendCfdiNotification($this->user, $this->message),
-            new TruncateCFDISImports($this->year, $this->company, $this->uuid),
         ]);
     }
 }
