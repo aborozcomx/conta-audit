@@ -25,7 +25,9 @@ class SalariesExport implements FromView
 
     public function view(): View
     {
-        $salaries = EmployeeSalary::with('employee')->where('year', $this->year)->where('period', $this->period)->where('company_id', $this->company)->get();
+        $salaries = EmployeeSalary::with(['employee' => function($q) {
+            $q->orderBy('name');
+        }])->where('year', $this->year)->where('period', $this->period)->where('company_id', $this->company)->get();
         return view('exports.salaries', [
             'salaries' => $salaries
         ]);

@@ -54,13 +54,9 @@ class EmployeeController extends Controller
             $company = $request->query('company');
         }
 
-        $salaries = EmployeeSalary::with('employee')->where('year', $year)->where('period', $period)->whereRelation('employee', 'company_id', $company)->get();
-
-        $variables = DB::table('employee_payroll_concepts')
-        ->select(DB::raw('concepto, SUM(amount) as total'))
-        ->where('year', $year)
-        ->groupBy(['concepto'])
-        ->get();
+        $salaries = EmployeeSalary::with(['employee' => function($q2){
+            $q2->orderBy('name');
+        }])->where('year', $year)->where('period', $period)->where('company_id', $company)->get();
 
         return Inertia::render('Employees/Show', [
             'salaries' => $salaries,
@@ -69,7 +65,6 @@ class EmployeeController extends Controller
             'period' => $period,
             'companies' => $companies,
             'company' => strval($company),
-            'variables' => $variables
         ]);
     }
 
@@ -144,7 +139,9 @@ class EmployeeController extends Controller
             $company = $request->query('company');
         }
 
-        $quotas = EmployeeQuota::with('employee')->where('year', $year)->where('period', $period)->whereRelation('employee', 'company_id', $company)->get();
+        $quotas = EmployeeQuota::with(['employee' => function($q){
+            $q->orderBy('name');
+        }])->where('year', $year)->where('period', $period)->where('company_id', $company)->get();
 
         $grouped = $quotas->groupBy('employee.social_number')->map(function ($row) {
             return $row->sum('difference');

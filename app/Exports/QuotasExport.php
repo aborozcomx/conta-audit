@@ -25,7 +25,9 @@ class QuotasExport implements FromView
 
     public function view(): View
     {
-        $quotas = EmployeeQuota::with('employee')->where('year', $this->year)->where('period', $this->period)->where('company_id', $this->company)->get();
+        $quotas = EmployeeQuota::with(['employee' => function($q){
+            $q->orderBy('name');
+        }])->where('year', $this->year)->where('period', $this->period)->where('company_id', $this->company)->get();
         return view('exports.quotas', [
             'quotas' => $quotas
         ]);

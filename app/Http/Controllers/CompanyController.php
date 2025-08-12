@@ -143,11 +143,11 @@ class CompanyController extends Controller
         $uuid = Str::uuid();
 
         Quotas::dispatch(
-            auth()->user(),
+            auth()->user()->id,
             storage_path('app/' . $filePath),
             $request->year,
             $message,
-            $company,
+            $company->id,
             $uuid
         );
 

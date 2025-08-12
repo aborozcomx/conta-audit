@@ -47,24 +47,9 @@ class ProcessCFDI implements ShouldQueue
         $this->uuid = $uuid;
 
     }
-
-    /** Backoff exponencial */
-    public function backoff(): array
-    {
-        return [10, 60, 300, 900];
-    }
     /**
      * Execute the job.
      */
-
-    public function middleware(): array
-    {
-        $key = "process-cfdi:{$this->company}:{$this->year}:{$this->uuid}";
-        return [
-            new WithoutOverlapping($key),     // no arranques otro igual
-            // new RateLimited('imports'),    // opcional: limitar tasa si usas RateLimiter
-        ];
-    }
 
     public function tags(): array
     {
@@ -86,10 +71,10 @@ class ProcessCFDI implements ShouldQueue
 
         Excel::queueImport(
             //new RawCfdiImport($this->year, $this->user->id, $this->company->id, $this->uuid),
-            new PlainDataImport($this->year, $company2),
+            new PlainDataImport($this->year, $company2,1000),
             $this->file
         )
-        ->onQueue('imports')
+        ->onQueue('cfdis')
         ->chain([
             (new SendCfdiNotification($user2, $this->message))->onQueue('notifications'),
         ]);

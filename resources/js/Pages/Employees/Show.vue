@@ -171,7 +171,6 @@ const props = defineProps<{
     salaries: EmployeeSalary[],
     companies: Company[],
     company: string,
-    variables: Variable[]
 
 }>()
 

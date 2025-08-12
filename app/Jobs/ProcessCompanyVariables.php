@@ -7,6 +7,9 @@ use Illuminate\Foundation\Queue\Queueable;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\CompanyVariable;
 use App\Models\Employee;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Throwable;
+use Illuminate\Support\Facades\Log;
 
 class ProcessCompanyVariables implements ShouldQueue
 {
@@ -16,8 +19,8 @@ class ProcessCompanyVariables implements ShouldQueue
     private $year;
 
 
-    public $timeout = 1200;
-    public $tries = 25;
+    public $timeout = 1800;
+    public $tries = 12;
     /**
      * Create a new job instance.
      */
@@ -28,6 +31,31 @@ class ProcessCompanyVariables implements ShouldQueue
 
     }
 
+    public function tags(): array
+    {
+        return [
+            'variables',
+            "year:{$this->year}",
+        ];
+    }
+
+    /** Backoff exponencial */
+    public function backoff(): array
+    {
+        return [10, 60, 300, 900];
+    }
+    /**
+     * Execute the job.
+     */
+
+    // public function middleware(): array
+    // {
+    //     $key = "process-vriables:{$this->year}";
+    //     return [
+    //         new WithoutOverlapping($key),     // no arranques otro igual
+    //         // new RateLimited('imports'),    // opcional: limitar tasa si usas RateLimiter
+    //     ];
+    // }
     /**
      * Execute the job.
      */
@@ -63,7 +91,6 @@ class ProcessCompanyVariables implements ShouldQueue
 
             $employee = Employee::where('number', $employeeR['numero_de_personal'])->first();
 
-
             if ($employee) {
                 $days = $employeeR['suma_cantidad'];
                 $import = $employeeR['suma_importe'];
@@ -87,5 +114,17 @@ class ProcessCompanyVariables implements ShouldQueue
             }
 
         }
+    }
+
+    public function failed(Throwable $e): void
+    {
+        Log::error('ProcessVariables failed', [
+            'year' => $this->year,
+            'file' => $this->file,
+            'error' => $e->getMessage(),
+        ]);
+
+        // Podrías notificar aquí también, o re-enfiletar una alerta
+        // SendAdminAlert::dispatch(...);
     }
 }

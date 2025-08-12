@@ -57,7 +57,7 @@ class VariableImport implements ShouldQueue, WithChunkReading, OnEachRow, WithHe
                     $absence = (int) ($row['aus'] ?? 0);
                     $incapacity = (int) ($row['inc'] ?? 0);
 
-                    $base_salary = $sdi_quoted;
+                    $base_salary = $sdi_aud;
                     $total_days = $days - $absence - $incapacity;
                     $difference_days = $days - $total_days;
                     $days_incapacity = $days - $incapacity;
@@ -119,6 +119,6 @@ class VariableImport implements ShouldQueue, WithChunkReading, OnEachRow, WithHe
 
     public function chunkSize(): int
     {
-        return 250;
+        return 1000;
     }
 }
