@@ -90,12 +90,12 @@ stderr_logfile=/var/log/worker-phpfpm.log
 "worker-laravel.conf" = '''
 [program:worker-laravel]
 process_name=%(program_name)s_%(process_num)02d
-command=php -d memory_limit=4096M /app/artisan queue:work --queue=cfdis,default,notifications,cuotas
+command=php -d memory_limit=1048M /app/artisan queue:work --queue=cfdis,default,notifications,cuotas
 autostart=true
 autorestart=true
 stopasgroup=true
 killasgroup=true
-numprocs=2
+numprocs=8
 startsecs=0
 stopwaitsecs=3600
 stdout_logfile=/var/log/laravel-worker.log
@@ -105,7 +105,7 @@ stderr_logfile=/var/log/laravel-worker.log
 "worker-horizon.conf" = '''
 [program:worker-horizon]
 process_name=%(program_name)s_horizon
-command=php -d memory_limit=4096M /app/artisan horizon
+command=php -d memory_limit=1048M /app/artisan horizon
 autostart=true
 autorestart=true
 redirect_stderr=true
@@ -128,7 +128,7 @@ pm.start_servers = 18
 clear_env = no
 php_admin_value[post_max_size] = 35M
 php_admin_value[upload_max_filesize] = 30M
-php_admin_value[memory_limit] = 4096M
+php_admin_value[memory_limit] = 1048M
 '''
 
 "nginx.template.conf" = '''
@@ -139,7 +139,7 @@ daemon off;
 worker_rlimit_nofile 8192;
 
 events {
-  worker_connections  4096;
+  worker_connections  1048;
 }
 
 http {
