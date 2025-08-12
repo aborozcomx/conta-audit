@@ -97,7 +97,7 @@ stopasgroup=true
 killasgroup=true
 numprocs=2
 startsecs=0
-stopwaitsecs=1500
+stopwaitsecs=3600
 stdout_logfile=/var/log/laravel-worker.log
 stderr_logfile=/var/log/laravel-worker.log
 '''
@@ -110,7 +110,7 @@ autostart=true
 autorestart=true
 redirect_stderr=true
 stdout_logfile=/var/log/horizon.log
-stopwaitsecs=1500
+stopwaitsecs=3600
 '''
 
 "php-fpm.conf" = '''
