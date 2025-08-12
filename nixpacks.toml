@@ -87,20 +87,6 @@ stdout_logfile=/var/log/worker-phpfpm.log
 stderr_logfile=/var/log/worker-phpfpm.log
 '''
 
-"worker-laravel.conf" = '''
-[program:worker-laravel]
-process_name=%(program_name)s_%(process_num)02d
-command=php -d memory_limit=1048M /app/artisan queue:work --queue=cfdis,default,notifications,cuotas
-autostart=true
-autorestart=true
-stopasgroup=true
-killasgroup=true
-numprocs=8
-startsecs=0
-stopwaitsecs=3600
-stdout_logfile=/var/log/laravel-worker.log
-stderr_logfile=/var/log/laravel-worker.log
-'''
 
 "worker-horizon.conf" = '''
 [program:worker-horizon]
