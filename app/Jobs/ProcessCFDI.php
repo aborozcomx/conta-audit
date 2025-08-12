@@ -13,7 +13,11 @@ use App\Imports\RawCfdiImport;
 use App\Jobs\ProcessCfdiBatches;
 use App\Jobs\SendCfdiNotification;
 use App\Jobs\TruncateCFDISImports;
-
+use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Throwable;
+use Illuminate\Support\Facades\Log;
+use App\Models\Company;
+use App\Models\User;
 
 
 class ProcessCFDI implements ShouldQueue
@@ -30,8 +34,8 @@ class ProcessCFDI implements ShouldQueue
     private $message;
     private $uuid;
 
-    public $timeout = 1200;
-    public $tries = 25;
+    public $timeout = 1800;
+    public $tries = 12;
 
     public function __construct($user, $file, $year, $message,$company,$uuid)
     {
@@ -44,18 +48,64 @@ class ProcessCFDI implements ShouldQueue
 
     }
 
+    /** Backoff exponencial */
+    public function backoff(): array
+    {
+        return [10, 60, 300, 900];
+    }
     /**
      * Execute the job.
      */
+
+    public function middleware(): array
+    {
+        $key = "process-cfdi:{$this->company}:{$this->year}:{$this->uuid}";
+        return [
+            new WithoutOverlapping($key),     // no arranques otro igual
+            // new RateLimited('imports'),    // opcional: limitar tasa si usas RateLimiter
+        ];
+    }
+
+    public function tags(): array
+    {
+        return [
+            'cfdi',
+            "company:{$this->company}",
+            "year:{$this->year}",
+            "uuid:{$this->uuid}",
+        ];
+    }
+
     public function handle(): void
     {
         //$data = Excel::import(new PlainDataImport($this->year), $this->file);
+
+        $company2 = Company::query()->findOrFail($this->company);
+        /** @var User $user */
+        $user2 = User::query()->findOrFail($this->user);
+
         Excel::queueImport(
             //new RawCfdiImport($this->year, $this->user->id, $this->company->id, $this->uuid),
-            new PlainDataImport($this->year, $this->company),
+            new PlainDataImport($this->year, $company2),
             $this->file
-        )->chain([
-            new SendCfdiNotification($this->user, $this->message),
+        )
+        ->onQueue('imports')
+        ->chain([
+            (new SendCfdiNotification($user2, $this->message))->onQueue('notifications'),
         ]);
+    }
+
+    public function failed(Throwable $e): void
+    {
+        Log::error('ProcessCFDI failed', [
+            'company_id' => $this->company,
+            'year' => $this->year,
+            'uuid' => $this->uuid,
+            'file' => $this->filePath,
+            'error' => $e->getMessage(),
+        ]);
+
+        // Podrías notificar aquí también, o re-enfiletar una alerta
+        // SendAdminAlert::dispatch(...);
     }
 }

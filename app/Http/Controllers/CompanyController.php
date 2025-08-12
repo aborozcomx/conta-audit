@@ -102,11 +102,11 @@ class CompanyController extends Controller
         // ])->dispatch(auth()->user(), storage_path('app/' . $filePath), $request->year);
 
         ProcessCFDI::dispatch(
-            auth()->user(),
+            auth()->user()->id,
             storage_path('app/' . $filePath),
             $request->year,
             $message,
-            $company,
+            $company->id,
             $uuid
         );
 
