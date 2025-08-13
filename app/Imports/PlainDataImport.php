@@ -34,7 +34,7 @@ class PlainDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, Sh
         $row = $row->toArray();
 
         $employee = Employee::firstOrCreate(
-            ['rfc' => $row['rfc_receptor']],
+            ['rfc' => $row['rfc_receptor'] ?? $row['numempleado']],
             [
                 'name' => $row['nombrereceptor'],
                 'clave' => $row['numempleado'],
@@ -126,7 +126,7 @@ class PlainDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, Sh
 
     public function chunkSize(): int
     {
-        return 500; // reduce si sigue consumiendo mucha memoria
+        return 1500; // reduce si sigue consumiendo mucha memoria
     }
 }
 
