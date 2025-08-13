@@ -91,7 +91,7 @@ stderr_logfile=/var/log/worker-phpfpm.log
 "worker-horizon.conf" = '''
 [program:worker-horizon]
 process_name=%(program_name)s_horizon
-command=php -d memory_limit=1048M /app/artisan horizon
+command=php -d memory_limit=2048M /app/artisan horizon
 autostart=true
 autorestart=true
 redirect_stderr=true
