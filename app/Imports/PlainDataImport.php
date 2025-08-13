@@ -34,13 +34,14 @@ class PlainDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, Sh
         $row = $row->toArray();
 
         $employee = Employee::firstOrCreate(
-            ['rfc' => $row['rfc_receptor'] ?? $row['numempleado']],
+            ['social_number' => $row['numseguridadsocial']],
             [
                 'name' => $row['nombrereceptor'],
                 'clave' => $row['numempleado'],
                 'puesto' => $row['pueston'] ?? 'N/A',
                 'depto' => $row['departamento'] ?? 'N/A',
                 'curp' => '',
+                'rfc' => '--',
                 'age' => '',
                 'start_date' => $row['fechainiciorellaboral'],
                 'number' => $row['numempleado'],
