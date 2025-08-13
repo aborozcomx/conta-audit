@@ -34,7 +34,7 @@ class ProcessCFDI implements ShouldQueue
     private $message;
     private $uuid;
 
-    public $timeout = 1800;
+    public $timeout = 1200;
     public $tries = 12;
 
     public function __construct($user, $file, $year, $message,$company,$uuid)

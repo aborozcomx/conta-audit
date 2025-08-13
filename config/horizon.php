@@ -182,15 +182,15 @@ return [
     'defaults' => [
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => ['cfdis','default','notifications','cuotas'],
+            'queue' => ['cfdis','notifications','cuotas', 'default'],
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
             'maxProcesses' => 8,
             'maxTime' => 0,
             'maxJobs' => 0,
             'memory' => 2048,
-            'tries' => 5,
-            'timeout' => 1800,
+            'tries' => 12,
+            'timeout' => 1200,
             'nice' => 0,
         ],
     ],
@@ -199,7 +199,8 @@ return [
         'production' => [
             'supervisor-1' => [
                 'maxProcesses' => 10,
-                'balanceMaxShift' => 1,
+                'minProcesses' => 4,
+                'balanceMaxShift' => 2,
                 'balanceCooldown' => 3,
             ],
         ],

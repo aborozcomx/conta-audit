@@ -94,7 +94,6 @@ process_name=%(program_name)s_horizon
 command=php -d memory_limit=2048M /app/artisan horizon
 autostart=true
 autorestart=true
-redirect_stderr=true
 stdout_logfile=/var/log/horizon.log
 stopwaitsecs=3600
 '''
