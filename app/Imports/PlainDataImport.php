@@ -33,26 +33,25 @@ class PlainDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, Sh
     {
         $row = $row->toArray();
 
-        $employee = Employee::firstOrCreate(
-            ['social_number' => $row['numseguridadsocial']],
-            [
-                'name' => $row['nombrereceptor'],
-                'clave' => $row['numempleado'],
-                'puesto' => $row['pueston'] ?? 'N/A',
-                'depto' => $row['departamento'] ?? 'N/A',
-                'curp' => '',
-                'rfc' => '--',
-                'age' => '',
-                'start_date' => $row['fechainiciorellaboral'],
-                'number' => $row['numempleado'],
-                'social_number' => $row['numseguridadsocial'],
-                'base_salary' => $row['salariobasecotapor'],
-                'daily_salary' => $row['salariobasecotapor'],
-                'company_id' => $this->company->id,
-            ]
-        );
-
         if ($row['tiponomina'] == 'O - Ordinaria' || $row['tiponomina'] == 'O') {
+            $employee = Employee::firstOrCreate(
+                ['social_number' => $row['numseguridadsocial']],
+                [
+                    'name' => $row['nombrereceptor'],
+                    'clave' => $row['numempleado'],
+                    'puesto' => $row['pueston'] ?? 'N/A',
+                    'depto' => $row['departamento'] ?? 'N/A',
+                    'curp' => '',
+                    'rfc' => '--',
+                    'age' => '',
+                    'start_date' => $row['fechainiciorellaboral'],
+                    'number' => $row['numempleado'],
+                    'social_number' => $row['numseguridadsocial'],
+                    'base_salary' => $row['salariobasecotapor'],
+                    'daily_salary' => $row['salariobasecotapor'],
+                    'company_id' => $this->company->id,
+                ]
+            );
             $year = $this->year;
             $month = $this->getMonthFromPeriod($row['periodo']);
 
