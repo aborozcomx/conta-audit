@@ -52,6 +52,7 @@ class Quotas implements ShouldQueue
             "company:{$this->company}",
             "year:{$this->year}",
             "uuid:{$this->uuid}",
+            "user:{$this->user}",
         ];
     }
     /**
