@@ -188,7 +188,7 @@ return [
             'maxProcesses' => 8,
             'maxTime' => 0,
             'maxJobs' => 0,
-            'memory' => 2048,
+            'memory' => 1024,
             'tries' => 12,
             'timeout' => 1200,
             'nice' => 0,
