@@ -10,10 +10,18 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use App\Models\Uma;
 use App\Models\Employee;
 use App\Models\EmployeeQuota;
+use Maatwebsite\Excel\Concerns\SkipsOnError;
+use Maatwebsite\Excel\Concerns\SkipsOnFailure;
+use Maatwebsite\Excel\Validators\Failure;
+use Maatwebsite\Excel\Concerns\SkipsFailures;
+use Throwable;
+use Illuminate\Support\Facades\Log;
 
 
-class VariableImport implements ShouldQueue, WithChunkReading, OnEachRow, WithHeadingRow
+
+class VariableImport implements ShouldQueue, WithChunkReading, OnEachRow, WithHeadingRow//, SkipsOnError, SkipsOnFailure
 {
+    //use SkipsFailures;
     /**
      * @param Collection $collection
      */
@@ -117,8 +125,34 @@ class VariableImport implements ShouldQueue, WithChunkReading, OnEachRow, WithHe
         }
     }
 
+    // public function onError(Throwable $e)
+    // {
+    //     // Log general errors during import (e.g., file reading issues)
+    //     Log::error('Laravel Excel Import Error: ' . $e->getMessage());
+    // }
+
+    // /**
+    //  * @param Failure[] $failures
+    //  */
+    // public function onFailure(Failure ...$failures)
+    // {
+    //     foreach ($failures as $failure) {
+    //         // Get the row number where the failure occurred
+    //         $row = $failure->row();
+    //         // Get the attribute that failed validation (e.g., 'email', 'name')
+    //         $attribute = $failure->attribute();
+    //         // Get the error messages for the failed attribute
+    //         $errors = implode(', ', $failure->errors());
+    //         // Get the original row data
+    //         $values = json_encode($failure->values());
+
+    //         // Log the failure details
+    //         Log::warning("Laravel Excel Import Failure on Row {$row}, Attribute '{$attribute}': {$errors}. Values: {$values}");
+    //     }
+    // }
+
     public function chunkSize(): int
     {
-        return 1000;
+        return 500;
     }
 }

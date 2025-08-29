@@ -16,6 +16,7 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Row;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Log;
 
 class PlainDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, ShouldQueue
 {
@@ -63,7 +64,15 @@ class PlainDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, Sh
             $vacation = $this->getVacation($age->y);
             if (!$vacation) {
                 // Maneja si no hay vacaciones definidas para ese año
-                return;
+                Log::error('ProcessCFDI failed', [
+                    'company_id' => $this->company,
+                    'year' => $this->year,
+                    'uuid' => $this->uuid,
+                    'file' => $this->filePath,
+                    'error' => $e->getMessage(),
+                    'age' => $age,
+                ]);
+                //return;
             }
 
             $daily_bonus = round($row['salariobasecotapor'] * $this->company->vacation_days / 365, 2);
@@ -127,7 +136,7 @@ class PlainDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, Sh
 
     public function chunkSize(): int
     {
-        return 1000; // reduce si sigue consumiendo mucha memoria
+        return 500; // reduce si sigue consumiendo mucha memoria
     }
 }
 
