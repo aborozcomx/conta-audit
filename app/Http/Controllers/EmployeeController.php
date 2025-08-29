@@ -54,9 +54,15 @@ class EmployeeController extends Controller
             $company = $request->query('company');
         }
 
-        $salaries = EmployeeSalary::with(['employee' => function($q2){
-            $q2->orderBy('name');
-        }])->where('year', $year)->where('period', $period)->where('company_id', $company)->get();
+        $salaries = DB::table('employee_salaries')
+            ->selectRaw('employee_salaries.*, employees.name, employees.rfc, employees.start_date,employees.social_number')
+            ->join('employees', 'employees.id', '=', 'employee_salaries.employee_id')
+            ->where('employee_salaries.period', $period)
+            ->where('employee_salaries.year', $year)
+            ->where('employee_salaries.company_id', $company)
+            ->orderBy('employees.name')
+            ->get();
+        //$salaries = EmployeeSalary::with('employee')->where('employee_salaries.year', $year)->where('employee_salaries.period', $period)->where('employee_salaries.company_id', $company)->limit(10)->get();
 
         return Inertia::render('Employees/Show', [
             'salaries' => $salaries,
@@ -139,13 +145,33 @@ class EmployeeController extends Controller
             $company = $request->query('company');
         }
 
-        $quotas = EmployeeQuota::with(['employee' => function($q){
-            $q->orderBy('name');
-        }])->where('year', $year)->where('period', $period)->where('company_id', $company)->get();
+        $quotas = DB::table('employee_quotas')
+            ->selectRaw('employee_quotas.*, employees.name, employees.rfc, employees.start_date,employees.social_number')
+            ->join('employees', 'employees.id', '=', 'employee_quotas.employee_id')
+            ->where('employee_quotas.period', $period)
+            ->where('employee_quotas.company_id', $company)
+            ->where('employee_quotas.year', $year)
+            ->orderBy('employees.name')
+            ->get();
 
-        $grouped = $quotas->groupBy('employee.social_number')->map(function ($row) {
-            return $row->sum('difference');
-        });
+        // $quotas = EmployeeQuota::with(['employee' => function($q){
+        //     $q->orderBy('name');
+        // }])->where('year', $year)->where('period', $period)->where('company_id', $company)->get();
+
+        // $grouped = $quotas->groupBy('employees.social_number')->map(function ($row) {
+        //     return $row->sum('difference');
+        // });
+
+        $grouped = DB::table('employee_quotas')
+            ->selectRaw('SUM(difference) as difference, employees.social_number')
+            ->join('employees', 'employees.id', '=', 'employee_quotas.employee_id')
+            ->where('employee_quotas.period', $period)
+            ->where('employee_quotas.company_id', $company)
+            ->where('employee_quotas.year', $year)
+            ->groupBy('employees.social_number')
+            ->pluck('difference','social_number');
+
+
 
         return Inertia::render('Employees/ShowQuotas', [
             'quotas' => $quotas,
@@ -164,11 +190,12 @@ class EmployeeController extends Controller
         $period = $request->period;
         $company = $request->company_id;
 
+        $companyData = Company::find($company);
+
+        $filename = 'IMSS_' . $companyData->rfc . '_' . $period . '_' . $year;
         $month = getMonths($period - 1);
 
-
-
-        return Excel::download(new QuotasExport($year, $period, $company), 'IMSS.xlsx');
+        return Excel::download(new QuotasExport($year, $period, $company), $filename . '.xlsx');
     }
 
     public function exportSalaries(Request $request)
@@ -177,10 +204,12 @@ class EmployeeController extends Controller
         $period = $request->period;
         $company = $request->company_id;
 
+        $companyData = Company::find($company);
+        $filename = 'SDI_' . $companyData->rfc . '_' . $period . '_' . $year;
+
         $month = getMonths($period - 1);
 
-
-        return Excel::download(new SalariesExport($year, $period, $company), 'sdi.xlsx');
+        return Excel::download(new SalariesExport($year, $period, $company), $filename . '.xlsx');
     }
 
     public function create(): Response
