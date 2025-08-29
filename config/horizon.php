@@ -185,12 +185,12 @@ return [
             'queue' => ['cfdis','notifications','cuotas', 'default'],
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
-            'maxProcesses' => 8,
+            'maxProcesses' => 12,
             'maxTime' => 0,
             'maxJobs' => 0,
             'memory' => 1024,
             'tries' => 12,
-            'timeout' => 1200,
+            'timeout' => 1800,
             'nice' => 0,
         ],
     ],
@@ -198,7 +198,7 @@ return [
     'environments' => [
         'production' => [
             'supervisor-1' => [
-                'maxProcesses' => 10,
+                'maxProcesses' => 12,
                 'minProcesses' => 4,
                 'balanceMaxShift' => 2,
                 'balanceCooldown' => 3,
