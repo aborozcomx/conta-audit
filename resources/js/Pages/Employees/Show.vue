@@ -49,7 +49,10 @@ interface EmployeeSalary {
     sdi_aud: number
     sdi_quoted: number
     difference: number
-    employee: Employee
+    name: string
+    rfc: string
+    social_number: string
+    start_date: string
 }
 
 interface Employee {
@@ -81,24 +84,24 @@ const columns: ColumnDef<EmployeeSalary>[] = [
         cell: ({ row }) => row.getValue('year')
     },
     {
-        accessorKey: 'employee',
+        accessorKey: 'name',
         header: 'Empleado',
-        cell: ({ row }) => row.original.employee.name
+        cell: ({ row }) => row.getValue('name')
     },
     {
-        accessorKey: 'employee',
+        accessorKey: 'rfc',
         header: 'RFC',
-        cell: ({ row }) => row.original.employee.rfc
+        cell: ({ row }) => row.getValue('rfc')
     },
     {
-        accessorKey: 'employee',
+        accessorKey: 'social_number',
         header: 'NSS',
-        cell: ({ row }) => row.original.employee.social_number
+        cell: ({ row }) => row.getValue('social_number')
     },
     {
-        accessorKey: 'employee',
+        accessorKey: 'start_date',
         header: 'Fecha inicio',
-        cell: ({ row }) => row.original.employee.start_date
+        cell: ({ row }) => row.getValue('start_date')
     },
     {
         accessorKey: 'daily_salary',

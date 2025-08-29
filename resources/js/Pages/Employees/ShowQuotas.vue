@@ -63,7 +63,9 @@ interface EmployeeQuota {
     total_audit: number
     total_company: number
     difference: number
-    employee: Employee
+    name: string
+    rfc: string
+    social_number: string
 }
 
 interface Employee {
@@ -90,19 +92,19 @@ const columns: ColumnDef<EmployeeQuota>[] = [
         cell: ({ row }) => row.getValue('year')
     },
     {
-        accessorKey: 'employee.name',
+        accessorKey: 'name',
         header: 'Empleado',
-        cell: ({ row }) => row.original.employee.name
+        cell: ({ row }) => row.getValue('name')
     },
     {
-        accessorKey: 'employee.rfc',
+        accessorKey: 'rfc',
         header: 'RFC',
-        cell: ({ row }) => row.original.employee.rfc
+        cell: ({ row }) => row.getValue('rfc')
     },
     {
-        accessorKey: 'employee.social_number',
+        accessorKey: 'social_number',
         header: 'NSS',
-        cell: ({ row }) => row.original.employee.social_number
+        cell: ({ row }) => row.getValue('social_number')
     },
     {
         accessorKey: 'base_salary',
@@ -205,7 +207,7 @@ const columns: ColumnDef<EmployeeQuota>[] = [
         accessorKey: 'Total',
         header: 'Total Neto',
         cell: ({ row }) => {
-            const total = props.grouped[row.original.employee.social_number] as number;
+            const total = props.grouped[row.original.social_number] as number;
             return total.toFixed(2)
 
         }

@@ -26,10 +26,10 @@
         <tr>
             <td>{{ $salary->year }}</td>
             <td>{{ $salary->period }}</td>
-            <td>{{ $salary->employee->name }}</td>
-            <td>{{ $salary->employee->rfc }}</td>
-            <td>{{ $salary->employee->social_number }}</td>
-            <td>{{ $salary->employee->start_date }}</td>
+            <td>{{ $salary->name }}</td>
+            <td>{{ $salary->rfc }}</td>
+            <td>{{ $salary->social_number }}</td>
+            <td>{{ $salary->start_date }}</td>
             <td>{{ $salary->daily_salary }}</td>
             <td>{{ $salary->daily_bonus }}</td>
             <td>{{ $salary->vacations_days }}</td>

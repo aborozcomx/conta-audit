@@ -32,9 +32,9 @@
         <tr>
             <td>{{ $quota->year }}</td>
             <td>{{ $quota->period }}</td>
-            <td>{{ $quota->employee->name }}</td>
-            <td>{{ $quota->employee->rfc }}</td>
-            <td>{{ $quota->employee->social_number }}</td>
+            <td>{{ $quota->name }}</td>
+            <td>{{ $quota->rfc }}</td>
+            <td>{{ $quota->social_number }}</td>
             <td>{{ $quota->base_salary }}</td>
             <td>{{ $quota->days }}</td>
             <td>{{ $quota->absence }}</td>
