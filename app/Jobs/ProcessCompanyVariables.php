@@ -2,32 +2,45 @@
 
 namespace App\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\CompanyVariable;
 use App\Models\Employee;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Throwable;
+use App\Models\User;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
+use Throwable;
 
 class ProcessCompanyVariables implements ShouldQueue
 {
-    use Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private $file;
+
     private $year;
 
+    private $user;
+
+    private $company;
+
+    private $message;
 
     public $timeout = 1200;
+
     public $tries = 12;
+
     /**
      * Create a new job instance.
      */
-    public function __construct($file, $year)
+    public function __construct($file, $year, $company)
     {
         $this->file = $file;
         $this->year = $year;
+        $this->company = $company;
+        // $this->message = $message;
 
     }
 
@@ -44,49 +57,44 @@ class ProcessCompanyVariables implements ShouldQueue
     {
         return [10, 60, 300, 900];
     }
-    /**
-     * Execute the job.
-     */
 
-    // public function middleware(): array
-    // {
-    //     $key = "process-vriables:{$this->year}";
-    //     return [
-    //         new WithoutOverlapping($key),     // no arranques otro igual
-    //         // new RateLimited('imports'),    // opcional: limitar tasa si usas RateLimiter
-    //     ];
-    // }
-    /**
-     * Execute the job.
-     */
     public function handle(): void
     {
+        // $user2 = User::query()->findOrFail($this->user);
+        // Excel::queueImport(
+        //     //new RawCfdiImport($this->year, $this->user->id, $this->company->id, $this->uuid),
+        //     new CompanyVariableXDI($this->year),
+        //     $this->file
+        // )
+        // ->onQueue('variables')
+        // ->chain([
+        //     (new SendCfdiNotification($user2, $this->message))->onQueue('notifications'),
+        // ]);
         $import = new CompanyVariable($this->file);
         Excel::import($import, $this->file);
 
         $resultados = $import->getResultados();
 
-
-        foreach($resultados as $employeeR) {
+        foreach ($resultados as $employeeR) {
             $periods = [];
 
-            if($employeeR['fecha'] == 12) {
-                $periods = [1,2];
+            if ($employeeR['fecha'] == 12) {
+                $periods = [1, 2];
 
-            }elseif($employeeR['fecha'] == 2) {
-                $periods = [3,4];
+            } elseif ($employeeR['fecha'] == 2) {
+                $periods = [3, 4];
 
-            }elseif($employeeR['fecha'] == 4) {
-                $periods = [5,6];
+            } elseif ($employeeR['fecha'] == 4) {
+                $periods = [5, 6];
 
-            }elseif($employeeR['fecha'] == 6) {
-                $periods = [7,8];
+            } elseif ($employeeR['fecha'] == 6) {
+                $periods = [7, 8];
 
-            }elseif($employeeR['fecha'] == 8) {
-                $periods = [9,10];
+            } elseif ($employeeR['fecha'] == 8) {
+                $periods = [9, 10];
 
-            }elseif($employeeR['fecha'] == 10) {
-                $periods = [11,12];
+            } elseif ($employeeR['fecha'] == 10) {
+                $periods = [11, 12];
             }
 
             $employee = Employee::where('number', $employeeR['numero_de_personal'])->first();
@@ -97,11 +105,11 @@ class ProcessCompanyVariables implements ShouldQueue
 
                 $salaries = $employee->employee_salaries->where('year', $this->year)->whereIn('period', $periods);
 
-                if(count($salaries) > 0) {
+                if (count($salaries) > 0) {
                     foreach ($salaries as $salary) {
 
                         $sdi_variable = ($days <= 0 || $import <= 0) ? 0 : $import / $days;
-                        $sdi_total = $salary->sdi +  $sdi_variable;
+                        $sdi_total = $salary->sdi + $sdi_variable;
                         $sdi_aud = $sdi_total > $salary->sdi_limit ? $salary->sdi_limit : $sdi_total;
 
                         $salary->update([
@@ -112,7 +120,6 @@ class ProcessCompanyVariables implements ShouldQueue
                     }
                 }
             }
-
         }
     }
 

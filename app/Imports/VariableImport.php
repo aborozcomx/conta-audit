@@ -2,28 +2,26 @@
 
 namespace App\Imports;
 
-use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Maatwebsite\Excel\Row;
-use Maatwebsite\Excel\Concerns\OnEachRow;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use App\Models\Uma;
 use App\Models\Employee;
 use App\Models\EmployeeQuota;
+use App\Models\Uma;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Concerns\OnEachRow;
+use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Row;
 use Maatwebsite\Excel\Validators\Failure;
-use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Throwable;
-use Illuminate\Support\Facades\Log;
 
-
-
-class VariableImport implements ShouldQueue, WithChunkReading, OnEachRow, WithHeadingRow//, SkipsOnError, SkipsOnFailure
+class VariableImport implements OnEachRow, ShouldQueue, WithChunkReading, WithHeadingRow // , SkipsOnError, SkipsOnFailure
 {
-    //use SkipsFailures;
+    // use SkipsFailures;
     /**
-     * @param Collection $collection
+     * @param  Collection  $collection
      */
     public $year;
 
@@ -36,22 +34,24 @@ class VariableImport implements ShouldQueue, WithChunkReading, OnEachRow, WithHe
     {
         $row = $row->toArray();
 
-        if (!empty($row['sdi']) && $row['sdi']) {
+        if ($row['sdi']) {
             $year = $this->year;
             $yearUma = ((int) $row['periodo'] === 1) ? $year - 1 : $year;
 
             $uma = Uma::where('year', $yearUma)->first();
 
+            $employee = Employee::where('social_number', $row['nss'])->first();
             $employee = Employee::with([
                 'company',
-                'employee_salaries' => fn($q) => $q->where('year', $year)->where('period', $row['periodo'])
+                'employee_salaries' => fn ($q) => $q->where('year', $year)->where('period', $row['periodo'])->orderBy('created_at', 'desc'),
             ])->where('social_number', $row['nss'])->first();
 
-            if($employee) {
+            if ($employee) {
 
+                // $salary = $employee->employee_salaries->where('year', $year)->where('period', $row['periodo'])->first();
                 $salary = $employee->employee_salaries->first();
 
-                if($salary) {
+                if ($salary) {
                     $sdi_quoted = $row['sdi'];
                     $sdi_aud = $salary->sdi_aud;
                     $difference = round($sdi_aud - $sdi_quoted, 2);

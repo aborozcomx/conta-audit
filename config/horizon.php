@@ -166,7 +166,7 @@ return [
     |
     */
 
-    'memory_limit' => 64,
+    'memory_limit' => 512,
 
     /*
     |--------------------------------------------------------------------------
@@ -182,15 +182,16 @@ return [
     'defaults' => [
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => ['cfdis','notifications','cuotas', 'default'],
+            'queue' => ['cfdis', 'notifications', 'cuotas', 'default'],
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
-            'maxProcesses' => 12,
+            'maxProcesses' => 16, // Aumenta a 4x núcleos
+            'minProcesses' => 6,  // Mínimo para mantener performance
             'maxTime' => 0,
             'maxJobs' => 0,
-            'memory' => 1024,
-            'tries' => 12,
-            'timeout' => 1800,
+            'memory' => 512, // Reduce memoria por worker
+            'tries' => 3,    // Reduce reintentos
+            'timeout' => 900, // Reduce timeout a 15min
             'nice' => 0,
         ],
     ],
@@ -198,10 +199,10 @@ return [
     'environments' => [
         'production' => [
             'supervisor-1' => [
-                'maxProcesses' => 12,
-                'minProcesses' => 4,
-                'balanceMaxShift' => 2,
-                'balanceCooldown' => 3,
+                'maxProcesses' => 16,
+                'minProcesses' => 6,
+                'balanceMaxShift' => 3,    // Permite escalado más agresivo
+                'balanceCooldown' => 2,
             ],
         ],
 
@@ -210,5 +211,12 @@ return [
                 'maxProcesses' => 3,
             ],
         ],
+    ],
+
+    'waits' => [
+        'redis:cfdis' => 30,        // CFDis más críticos
+        'redis:notifications' => 45, // Notificaciones medianamente críticas
+        'redis:cuotas' => 60,       // Cuotas pueden esperar más
+        'redis:default' => 90,      // Default puede esperar más
     ],
 ];

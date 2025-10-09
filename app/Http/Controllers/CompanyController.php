@@ -2,31 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Redirect;
-use App\Models\Company;
-use App\Imports\VariableImport;
-use App\Imports\CompanyVariable;
 use App\Jobs\ProcessCFDI;
 use App\Jobs\ProcessCompanyVariables;
 use App\Jobs\Quotas;
 use App\Jobs\SendCfdiNotification;
+use App\Models\Company;
 use App\Models\EmployeePayroll;
-use Illuminate\Support\Facades\DB;
-use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class CompanyController extends Controller
 {
     public function index(): Response
     {
 
-        //phpinfo();
+        // phpinfo();
         return Inertia::render('Companies/Index', [
-            'companies' => Company::all()
+            'companies' => Company::all(),
         ]);
     }
 
@@ -38,7 +34,7 @@ class CompanyController extends Controller
     public function edit(Company $company): Response
     {
         return Inertia::render('Companies/Edit', [
-            'company' => $company
+            'company' => $company,
         ]);
     }
 
@@ -67,7 +63,7 @@ class CompanyController extends Controller
     {
         return Inertia::render('Companies/Show', [
             'years' => getYears(),
-            'company' => $company
+            'company' => $company,
         ]);
     }
 
@@ -87,14 +83,13 @@ class CompanyController extends Controller
         ]);
     }
 
-
     public function uploadFile(Request $request, Company $company)
     {
         $filePath = $request->file('file')->store('imports/cfdis');
         $uuid = Str::uuid();
         $message = [
             'title' => 'CFDIS',
-            'content' => 'Se ha terminado la importación de CFDIS'
+            'content' => 'Se ha terminado la importación de CFDIS',
         ];
 
         // ProcessCFDI::withChain([
@@ -103,14 +98,12 @@ class CompanyController extends Controller
 
         ProcessCFDI::dispatch(
             auth()->user()->id,
-            storage_path('app/' . $filePath),
+            storage_path('app/'.$filePath),
             $request->year,
             $message,
             $company->id,
             $uuid
         );
-
-
 
         return Redirect::route('employees.salaries')->with('message', 'Importando CFDIS');
     }
@@ -120,14 +113,19 @@ class CompanyController extends Controller
         $filePath = $request->file('file')->store('imports/variables');
         $message = [
             'title' => 'Variables',
-            'content' => 'Se ha terminado la importación de las variables de la compañía'
+            'content' => 'Se ha terminado la importación de las variables de la compañía',
         ];
 
         ProcessCompanyVariables::withChain([
-             new SendCfdiNotification(auth()->user(), $message)
-        ])->dispatch(storage_path('app/' . $filePath), $request->year, $company);
+            new SendCfdiNotification(auth()->user(), $message),
+        ])->dispatch(storage_path('app/'.$filePath), $request->year, $company);
 
-
+        // ProcessCompanyVariables::dispatch(
+        //     storage_path('app/' . $filePath),
+        //     $request->year,
+        //     auth()->user()->id,
+        //     $message
+        // );
 
         return Redirect::route('employees.salaries')->with('message', 'Importando Variables de la CIA');
     }
@@ -137,14 +135,14 @@ class CompanyController extends Controller
         $filePath = $request->file('file')->store('quotas');
         $message = [
             'title' => 'Cuotas IMSS',
-            'content' => 'Se ha terminado la importación de las cuotas IMSS'
+            'content' => 'Se ha terminado la importación de las cuotas IMSS',
         ];
 
         $uuid = Str::uuid();
 
         Quotas::dispatch(
             auth()->user()->id,
-            storage_path('app/' . $filePath),
+            storage_path('app/'.$filePath),
             $request->year,
             $message,
             $company->id,
@@ -159,7 +157,7 @@ class CompanyController extends Controller
         $payrolls = EmployeePayroll::all();
 
         return Inertia::render('Employees/Payrolls', [
-            'payrolls' => $payrolls
+            'payrolls' => $payrolls,
         ]);
     }
 
@@ -167,14 +165,14 @@ class CompanyController extends Controller
     {
         return Inertia::render('Companies/Patronals', [
             'patronals' => $company->company_patronals,
-            'company' => $company
+            'company' => $company,
         ]);
     }
 
     public function createPatronal(Request $request, Company $company)
     {
         return Inertia::render('Companies/CreatePatronals', [
-            'company' => $company
+            'company' => $company,
         ]);
     }
 }

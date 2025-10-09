@@ -2,41 +2,40 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Redirect;
-use App\Models\Employee;
-use App\Models\Company;
-use App\Models\EmployeeConcept;
-use App\Models\EmployeePayroll;
-use App\Models\Vacation;
-use App\Models\EmployeePayrollConcept;
-use App\Models\EmployeeSalary;
-use App\Models\EmployeeQuota;
-use App\Models\Uma;
-use Carbon\Carbon;
 use App\Exports\QuotasExport;
 use App\Exports\SalariesExport;
-use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Facades\DB;
-use App\Jobs\SendCfdiNotification;
 use App\Jobs\CalculateDifference;
+use App\Jobs\SendCfdiNotification;
+use App\Models\Company;
+use App\Models\Employee;
+use App\Models\EmployeePayroll;
+use App\Models\EmployeePayrollConcept;
+use App\Models\EmployeeQuota;
+use App\Models\EmployeeSalary;
+use App\Models\Uma;
+use App\Models\Vacation;
+use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redirect;
+use Inertia\Inertia;
+use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
 
 class EmployeeController extends Controller
 {
     public function index(): Response
     {
         return Inertia::render('Employees/Index', [
-            'employees' => Employee::with('company')->get()
+            'employees' => Employee::with('company')->get(),
         ]);
     }
 
     public function show(Request $request, Employee $employee): Response
     {
         $year = '2023';
-        $period = "1";
+        $period = '1';
         $month = getMonths($period);
         $companies = Company::all();
         $company = Company::first();
@@ -62,7 +61,7 @@ class EmployeeController extends Controller
             ->where('employee_salaries.company_id', $company)
             ->orderBy('employees.name')
             ->get();
-        //$salaries = EmployeeSalary::with('employee')->where('employee_salaries.year', $year)->where('employee_salaries.period', $period)->where('employee_salaries.company_id', $company)->limit(10)->get();
+        // $salaries = EmployeeSalary::with('employee')->where('employee_salaries.year', $year)->where('employee_salaries.period', $period)->where('employee_salaries.company_id', $company)->limit(10)->get();
 
         return Inertia::render('Employees/Show', [
             'salaries' => $salaries,
@@ -83,18 +82,18 @@ class EmployeeController extends Controller
 
         $message = [
             'title' => 'SDI',
-            'content' => 'Se ha terminado el cálculo de SDI'
+            'content' => 'Se ha terminado el cálculo de SDI',
         ];
 
         CalculateDifference::withChain([
-             new SendCfdiNotification(auth()->user(), $message)
-        ])->dispatch( $company,$period, $year);
-
+            new SendCfdiNotification(auth()->user(), $message),
+        ])->dispatch($company, $period, $year);
 
         return redirect()->back()->with('message', 'Calculando diferencia...');
     }
 
-    public function saveVariables(Request $request) {
+    public function saveVariables(Request $request)
+    {
         $year = $request->year;
         $company = $request->company;
         $variables = $request->variables;
@@ -110,15 +109,13 @@ class EmployeeController extends Controller
             })
             ->get();
 
-
         $concepts = EmployeePayrollConcept::where('company_id', $company)->where('year', $year)->whereIn('concepto', $variables)->get();
 
-        foreach($concepts as $concept) {
+        foreach ($concepts as $concept) {
             $concept->update([
-                'is_variable' => true
+                'is_variable' => true,
             ]);
         }
-
 
         return redirect()->back()->with('message', 'Las variables se han guardado correctamente');
     }
@@ -126,7 +123,7 @@ class EmployeeController extends Controller
     public function showQuotas(Request $request): Response
     {
         $year = '2023';
-        $period = "1";
+        $period = '1';
         $month = getMonths($period);
 
         $companies = Company::all();
@@ -169,9 +166,22 @@ class EmployeeController extends Controller
             ->where('employee_quotas.company_id', $company)
             ->where('employee_quotas.year', $year)
             ->groupBy('employees.social_number')
-            ->pluck('difference','social_number');
+            ->pluck('difference', 'social_number');
 
-
+        // $grouped = DB::table('employee_quotas as eq1')
+        //     ->join('employee_quotas as eq2', function ($join) {
+        //         $join->on('eq1.employee_id', '=', 'eq2.employee_id');
+        //     })
+        //     ->join('employees', 'employees.id', '=', 'eq1.employee_id')
+        //     ->selectRaw('(eq1.difference - eq2.difference) as difference, employees.social_number')
+        //     ->where('eq1.period', $period)
+        //     ->where('eq1.company_id', $company)
+        //     ->where('eq1.year', $year)
+        //     ->where('eq2.period', $period)
+        //     ->where('eq2.company_id', $company)
+        //     ->where('eq2.year', $year)
+        //     ->groupBy('employees.social_number', 'eq1.difference', 'eq2.difference')
+        //     ->pluck('difference', 'social_number');
 
         return Inertia::render('Employees/ShowQuotas', [
             'quotas' => $quotas,
@@ -180,7 +190,7 @@ class EmployeeController extends Controller
             'period' => $period,
             'companies' => $companies,
             'company' => strval($company),
-            'grouped' => $grouped
+            'grouped' => $grouped,
         ]);
     }
 
@@ -192,10 +202,10 @@ class EmployeeController extends Controller
 
         $companyData = Company::find($company);
 
-        $filename = 'IMSS_' . $companyData->rfc . '_' . $period . '_' . $year;
+        $filename = 'IMSS_'.$companyData->rfc.'_'.$period.'_'.$year;
         $month = getMonths($period - 1);
 
-        return Excel::download(new QuotasExport($year, $period, $company), $filename . '.xlsx');
+        return Excel::download(new QuotasExport($year, $period, $company), $filename.'.xlsx');
     }
 
     public function exportSalaries(Request $request)
@@ -205,17 +215,17 @@ class EmployeeController extends Controller
         $company = $request->company_id;
 
         $companyData = Company::find($company);
-        $filename = 'SDI_' . $companyData->rfc . '_' . $period . '_' . $year;
+        $filename = 'SDI_'.$companyData->rfc.'_'.$period.'_'.$year;
 
         $month = getMonths($period - 1);
 
-        return Excel::download(new SalariesExport($year, $period, $company), $filename . '.xlsx');
+        return Excel::download(new SalariesExport($year, $period, $company), $filename.'.xlsx');
     }
 
     public function create(): Response
     {
         return Inertia::render('Employees/Create', [
-            'companies' => Company::all()
+            'companies' => Company::all(),
         ]);
     }
 
@@ -223,7 +233,7 @@ class EmployeeController extends Controller
     {
         return Inertia::render('Employees/Edit', [
             'employee' => $employee,
-            'companies' => Company::all()
+            'companies' => Company::all(),
         ]);
     }
 
@@ -252,7 +262,7 @@ class EmployeeController extends Controller
     {
         return Inertia::render('Employees/Payrolls', [
             'employee' => $employee,
-            'payrolls' => $employee->employee_payrolls
+            'payrolls' => $employee->employee_payrolls,
         ]);
     }
 
@@ -261,7 +271,7 @@ class EmployeeController extends Controller
 
         return Inertia::render('Employees/Concepts', [
 
-            'concepts' => $employeePayroll->employee_payrolls_concept()->with('employee')->get()
+            'concepts' => $employeePayroll->employee_payrolls_concept()->with('employee')->get(),
         ]);
     }
 
@@ -300,7 +310,7 @@ class EmployeeController extends Controller
         $sdi_variable = $employee_salary->sdi_variable;
         $sdi_quoted = $employee_salary->sdi_quoted;
 
-        $sdi_total = $employee_salary->sdi +  $sdi_variable;
+        $sdi_total = $employee_salary->sdi + $sdi_variable;
         $sdi_aud = $sdi_total > $employee_salary->sdi_limit ? $employee_salary->sdi_limit : $sdi_total;
         $difference = round($sdi_aud - $sdi_quoted, 2);
 
@@ -331,8 +341,7 @@ class EmployeeController extends Controller
         $sdi_variable = $request->sdi_variable;
         $sdi_quoted = $request->sdi_quoted;
 
-        $sdi_total = $employee_salary->sdi +  $sdi_variable;
-
+        $sdi_total = $employee_salary->sdi + $sdi_variable;
 
         $sdi_aud = $sdi_total > $employee_salary->sdi_limit ? $employee_salary->sdi_limit : $sdi_total;
         $difference = round($sdi_aud - $sdi_quoted, 2);
