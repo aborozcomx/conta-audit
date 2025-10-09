@@ -95,15 +95,7 @@ command=php -d memory_limit=512M /app/artisan horizon
 autostart=true
 autorestart=true
 stdout_logfile=/var/log/horizon.log
-stderr_logfile=/var/log/horizon.log
 stopwaitsecs=120
-user=www-data
-numprocs=1
-directory=/app
-redirect_stderr=true
-stdout_logfile_maxbytes=100MB
-stdout_logfile_backups=5
-environment=PROCESS_NAME="horizon"
 '''
 
 "php-fpm.conf" = '''
