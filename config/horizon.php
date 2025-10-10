@@ -203,6 +203,7 @@ return [
                 'minProcesses' => 3,
                 'balanceMaxShift' => 3,    // Permite escalado más agresivo
                 'balanceCooldown' => 2,
+                'php_binary' => '/usr/bin/php -c /assets/custom-php.ini',
             ],
         ],
 
