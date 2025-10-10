@@ -32,12 +32,18 @@ class ProcessCompanyVariables implements ShouldQueue
     public $memory = 512;
 
     private $periodMap = [
-        12 => [1, 2],
+        1 => [3, 4],
         2 => [3, 4],
+        3 => [5, 6],
         4 => [5, 6],
+        5 => [7, 8],
         6 => [7, 8],
+        7 => [9, 10],
         8 => [9, 10],
+        9 => [11, 12],
         10 => [11, 12],
+        11 => [1, 2],
+        12 => [1, 2],
     ];
 
     public function __construct($file, $year, $company)
@@ -72,11 +78,6 @@ class ProcessCompanyVariables implements ShouldQueue
             $import = new CompanyVariable;
             Excel::import($import, $this->file);
             $resultados = $import->getResultados();
-
-            Log::info('Excel procesado', [
-                'registros' => $resultados->count(),
-                'filas_procesadas' => $import->getProcessedRows(),
-            ]);
 
             if ($resultados->isEmpty()) {
                 Log::warning('No se encontraron resultados para procesar');
@@ -135,32 +136,27 @@ class ProcessCompanyVariables implements ShouldQueue
         foreach ($chunk as $employeeR) {
             $employee = $employees[$employeeR['numero_de_personal']] ?? null;
 
-            if (! $employee || ! $employee->employee_salaries) {
-                continue;
-            }
-
             $periods = $this->periodMap[$employeeR['fecha']] ?? [];
-            if (empty($periods)) {
-                continue;
-            }
 
-            $days = $employeeR['suma_cantidad'];
-            $import = $employeeR['suma_importe'];
-            $sdi_variable = ($days <= 0 || $import <= 0) ? 0 : $import / $days;
+            if ($employee) {
+                $days = $employeeR['suma_cantidad'];
+                $import = $employeeR['suma_importe'];
+                $sdi_variable = ($days <= 0 || $import <= 0) ? 0 : $import / $days;
 
-            // Filtrar salarios por períodos
-            $salaries = $employee->employee_salaries->whereIn('period', $periods);
+                // Filtrar salarios por períodos
+                $salaries = $employee->employee_salaries->whereIn('period', $periods);
 
-            foreach ($salaries as $salary) {
-                $sdi_total = $salary->sdi + $sdi_variable;
-                $sdi_aud = $sdi_total > $salary->sdi_limit ? $salary->sdi_limit : $sdi_total;
+                foreach ($salaries as $salary) {
+                    $sdi_total = $salary->sdi + $sdi_variable;
+                    $sdi_aud = $sdi_total > $salary->sdi_limit ? $salary->sdi_limit : $sdi_total;
 
-                $updates[] = [
-                    'id' => $salary->id,
-                    'sdi_variable' => round($sdi_variable, 2),
-                    'total_sdi' => round($sdi_total, 2),
-                    'sdi_aud' => round($sdi_aud, 2),
-                ];
+                    $updates[] = [
+                        'id' => $salary->id,
+                        'sdi_variable' => round($sdi_variable, 2),
+                        'total_sdi' => round($sdi_total, 2),
+                        'sdi_aud' => round($sdi_aud, 2),
+                    ];
+                }
             }
         }
 
