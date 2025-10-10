@@ -185,11 +185,11 @@ return [
             'queue' => ['cfdis', 'notifications', 'cuotas', 'default'],
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
-            'maxProcesses' => 16, // Aumenta a 4x núcleos
-            'minProcesses' => 6,  // Mínimo para mantener performance
+            'maxProcesses' => 10, // Aumenta a 4x núcleos
+            'minProcesses' => 3,  // Mínimo para mantener performance
             'maxTime' => 0,
             'maxJobs' => 0,
-            'memory' => 512, // Reduce memoria por worker
+            'memory' => 256, // Reduce memoria por worker
             'tries' => 3,    // Reduce reintentos
             'timeout' => 900, // Reduce timeout a 15min
             'nice' => 0,
@@ -199,8 +199,8 @@ return [
     'environments' => [
         'production' => [
             'supervisor-1' => [
-                'maxProcesses' => 16,
-                'minProcesses' => 6,
+                'maxProcesses' => 10,
+                'minProcesses' => 3,
                 'balanceMaxShift' => 3,    // Permite escalado más agresivo
                 'balanceCooldown' => 2,
             ],
@@ -211,12 +211,5 @@ return [
                 'maxProcesses' => 3,
             ],
         ],
-    ],
-
-    'waits' => [
-        'redis:cfdis' => 30,        // CFDis más críticos
-        'redis:notifications' => 45, // Notificaciones medianamente críticas
-        'redis:cuotas' => 60,       // Cuotas pueden esperar más
-        'redis:default' => 90,      // Default puede esperar más
     ],
 ];
