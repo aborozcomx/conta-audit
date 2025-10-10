@@ -4,12 +4,13 @@ namespace App\Jobs;
 
 use App\Imports\CompanyVariable;
 use App\Models\Employee;
-use App\Models\User;
+use App\Models\EmployeeSalary;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
@@ -22,116 +23,192 @@ class ProcessCompanyVariables implements ShouldQueue
 
     private $year;
 
-    private $user;
-
     private $company;
 
-    private $message;
+    public $timeout = 3600; // 1 hora
 
-    public $timeout = 1200;
+    public $tries = 3;
 
-    public $tries = 12;
+    public $memory = 512;
 
-    /**
-     * Create a new job instance.
-     */
+    private $periodMap = [
+        12 => [1, 2],
+        2 => [3, 4],
+        4 => [5, 6],
+        6 => [7, 8],
+        8 => [9, 10],
+        10 => [11, 12],
+    ];
+
     public function __construct($file, $year, $company)
     {
         $this->file = $file;
         $this->year = $year;
         $this->company = $company;
-        // $this->message = $message;
-
     }
 
     public function tags(): array
     {
-        return [
-            'variables',
-            "year:{$this->year}",
-        ];
+        return ['variables', "year:{$this->year}"];
     }
 
-    /** Backoff exponencial */
     public function backoff(): array
     {
-        return [10, 60, 300, 900];
+        return [120, 600]; // 2 min, 10 min
     }
 
     public function handle(): void
     {
-        // $user2 = User::query()->findOrFail($this->user);
-        // Excel::queueImport(
-        //     //new RawCfdiImport($this->year, $this->user->id, $this->company->id, $this->uuid),
-        //     new CompanyVariableXDI($this->year),
-        //     $this->file
-        // )
-        // ->onQueue('variables')
-        // ->chain([
-        //     (new SendCfdiNotification($user2, $this->message))->onQueue('notifications'),
-        // ]);
-        $import = new CompanyVariable($this->file);
-        Excel::import($import, $this->file);
+        Log::info('Iniciando ProcessCompanyVariables', [
+            'file' => $this->file,
+            'year' => $this->year,
+            'company' => $this->company,
+        ]);
 
-        $resultados = $import->getResultados();
+        // Liberar memoria antes de empezar
+        gc_collect_cycles();
 
-        foreach ($resultados as $employeeR) {
-            $periods = [];
+        try {
+            $import = new CompanyVariable;
+            Excel::import($import, $this->file);
+            $resultados = $import->getResultados();
 
-            if ($employeeR['fecha'] == 12) {
-                $periods = [1, 2];
+            Log::info('Excel procesado', [
+                'registros' => $resultados->count(),
+                'filas_procesadas' => $import->getProcessedRows(),
+            ]);
 
-            } elseif ($employeeR['fecha'] == 2) {
-                $periods = [3, 4];
+            if ($resultados->isEmpty()) {
+                Log::warning('No se encontraron resultados para procesar');
 
-            } elseif ($employeeR['fecha'] == 4) {
-                $periods = [5, 6];
-
-            } elseif ($employeeR['fecha'] == 6) {
-                $periods = [7, 8];
-
-            } elseif ($employeeR['fecha'] == 8) {
-                $periods = [9, 10];
-
-            } elseif ($employeeR['fecha'] == 10) {
-                $periods = [11, 12];
+                return;
             }
 
-            $employee = Employee::where('number', $employeeR['numero_de_personal'])->first();
+            $this->processResultados($resultados);
 
-            if ($employee) {
-                $days = $employeeR['suma_cantidad'];
-                $import = $employeeR['suma_importe'];
+            Log::info('ProcessCompanyVariables completado exitosamente');
 
-                $salaries = $employee->employee_salaries->where('year', $this->year)->whereIn('period', $periods);
+        } catch (\Exception $e) {
+            Log::error('Error en ProcessCompanyVariables', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e;
+        } finally {
+            // Limpieza final de memoria
+            unset($import, $resultados);
+            gc_collect_cycles();
+        }
+    }
 
-                if (count($salaries) > 0) {
-                    foreach ($salaries as $salary) {
+    private function processResultados($resultados): void
+    {
+        $chunks = $resultados->chunk(100); // Procesar en chunks de 100 empleados
 
-                        $sdi_variable = ($days <= 0 || $import <= 0) ? 0 : $import / $days;
-                        $sdi_total = $salary->sdi + $sdi_variable;
-                        $sdi_aud = $sdi_total > $salary->sdi_limit ? $salary->sdi_limit : $sdi_total;
+        foreach ($chunks as $chunkIndex => $chunk) {
+            Log::debug("Procesando chunk {$chunkIndex}", ['size' => $chunk->count()]);
 
-                        $salary->update([
-                            'sdi_variable' => floatval(round($sdi_variable, 2)),
-                            'total_sdi' => floatval(round($sdi_total, 2)),
-                            'sdi_aud' => floatval(round($sdi_aud, 2)),
-                        ]);
-                    }
-                }
+            $this->processChunk($chunk);
+
+            // Liberar memoria cada 5 chunks
+            if ($chunkIndex % 5 === 0) {
+                gc_collect_cycles();
             }
         }
     }
 
+    private function processChunk($chunk): void
+    {
+        $employeeNumbers = $chunk->pluck('numero_de_personal')->toArray();
+
+        // Cargar empleados con sus salarios
+        $employees = Employee::whereIn('number', $employeeNumbers)
+            ->with(['employee_salaries' => function ($query) {
+                $query->where('year', $this->year)
+                    ->select(['id', 'employee_id', 'year', 'period', 'sdi', 'sdi_limit']);
+            }])
+            ->get(['id', 'number'])
+            ->keyBy('number');
+
+        $updates = [];
+
+        foreach ($chunk as $employeeR) {
+            $employee = $employees[$employeeR['numero_de_personal']] ?? null;
+
+            if (! $employee || ! $employee->employee_salaries) {
+                continue;
+            }
+
+            $periods = $this->periodMap[$employeeR['fecha']] ?? [];
+            if (empty($periods)) {
+                continue;
+            }
+
+            $days = $employeeR['suma_cantidad'];
+            $import = $employeeR['suma_importe'];
+            $sdi_variable = ($days <= 0 || $import <= 0) ? 0 : $import / $days;
+
+            // Filtrar salarios por períodos
+            $salaries = $employee->employee_salaries->whereIn('period', $periods);
+
+            foreach ($salaries as $salary) {
+                $sdi_total = $salary->sdi + $sdi_variable;
+                $sdi_aud = $sdi_total > $salary->sdi_limit ? $salary->sdi_limit : $sdi_total;
+
+                $updates[] = [
+                    'id' => $salary->id,
+                    'sdi_variable' => round($sdi_variable, 2),
+                    'total_sdi' => round($sdi_total, 2),
+                    'sdi_aud' => round($sdi_aud, 2),
+                ];
+            }
+        }
+
+        if (! empty($updates)) {
+            $this->batchUpdateSalaries($updates);
+        }
+    }
+
+    private function batchUpdateSalaries(array $updates): void
+    {
+        $table = (new EmployeeSalary)->getTable();
+        $chunkedUpdates = array_chunk($updates, 100); // Actualizar en lotes de 100
+
+        foreach ($chunkedUpdates as $updateChunk) {
+            $caseSdiVariable = $this->buildCaseSQL('sdi_variable', $updateChunk);
+            $caseTotalSdi = $this->buildCaseSQL('total_sdi', $updateChunk);
+            $caseSdiAud = $this->buildCaseSQL('sdi_aud', $updateChunk);
+
+            $ids = implode(',', array_column($updateChunk, 'id'));
+
+            DB::statement("
+                UPDATE {$table}
+                SET
+                    sdi_variable = CASE id {$caseSdiVariable} ELSE sdi_variable END,
+                    total_sdi = CASE id {$caseTotalSdi} ELSE total_sdi END,
+                    sdi_aud = CASE id {$caseSdiAud} ELSE sdi_aud END
+                WHERE id IN ({$ids})
+            ");
+        }
+    }
+
+    private function buildCaseSQL(string $field, array $updates): string
+    {
+        $cases = '';
+        foreach ($updates as $update) {
+            $cases .= "WHEN {$update['id']} THEN {$update[$field]} ";
+        }
+
+        return $cases;
+    }
+
     public function failed(Throwable $e): void
     {
-        Log::error('ProcessVariables failed', [
+        Log::error('ProcessCompanyVariables failed', [
             'year' => $this->year,
             'file' => $this->file,
             'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
         ]);
-
-        // Podrías notificar aquí también, o re-enfiletar una alerta
-        // SendAdminAlert::dispatch(...);
     }
 }

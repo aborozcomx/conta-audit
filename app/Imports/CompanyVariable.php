@@ -2,68 +2,132 @@
 
 namespace App\Imports;
 
-use Maatwebsite\Excel\Row;
-use Maatwebsite\Excel\Concerns\OnEachRow;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use Maatwebsite\Excel\Concerns\OnEachRow;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Row;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
-class CompanyVariable implements OnEachRow, WithHeadingRow
+class CompanyVariable implements OnEachRow, WithBatchInserts, WithChunkReading, WithHeadingRow
 {
-    /**
-    * @param Collection $collection
-    */
-    public $resultados = [];
+    private $resultados = [];
+
+    private $processedRows = 0;
+
+    private $maxRows = 10000; // Límite máximo de filas
 
     public function onRow(Row $row)
     {
-        $row = $row->toArray();
+        // Limitar memoria cada 100 filas
+        if ($this->processedRows % 100 === 0) {
+            gc_collect_cycles();
+        }
 
-        $numeroPersonal = $row['numero_de_personal'] ?? null;
-        $concepto = $row['texto_explcc_nomina'] ?? null;
-        $importe = $row['importe'] ?? 0;
-        $cantidad = $row['cantidad'] ?? 0;
-        $fechaNomina = $row['final_del_periodo_en_nomina'] ?? null;
+        $this->processedRows++;
 
-        // Solo si aplica el filtro
-        if (in_array($concepto, ['Parte variable acumulada', 'Días calendario']) && $numeroPersonal) {
-            $mes = null;
+        // Limitar el número máximo de filas procesadas
+        if ($this->processedRows > $this->maxRows) {
+            return;
+        }
 
-            if (!empty($fechaNomina)) {
-                try {
-                    $fecha = Date::excelToDateTimeObject($fechaNomina);
-                    $mes = Carbon::instance($fecha)->month;
-                } catch (\Exception $e) {
-                    $mes = null;
-                }
-            }
+        $rowArray = $row->toArray();
 
-            if (!isset($this->resultados[$numeroPersonal])) {
-                $this->resultados[$numeroPersonal] = [
-                    'suma_importe' => 0,
-                    'suma_cantidad' => 0,
-                    'fecha' => $mes, // se puede sobreescribir, se asume 1 por empleado
-                ];
-            }
+        $numeroPersonal = $rowArray['numero_de_personal'] ?? null;
+        $concepto = $rowArray['texto_explcc_nomina'] ?? null;
+        $importe = $rowArray['importe'] ?? 0;
+        $cantidad = $rowArray['cantidad'] ?? 0;
+        $fechaNomina = $rowArray['final_del_periodo_en_nomina'] ?? null;
 
-            $this->resultados[$numeroPersonal]['suma_importe'] += (float) $importe;
-            $this->resultados[$numeroPersonal]['suma_cantidad'] += (float) $cantidad;
-            $this->resultados[$numeroPersonal]['fecha'] = $mes; // puedes mantener el último valor
+        // Filtro más eficiente
+        if (! $numeroPersonal || ! in_array($concepto, ['Parte variable acumulada', 'Días calendario'])) {
+            return;
+        }
+
+        $mes = $this->parseFechaNomina($fechaNomina);
+
+        if (! isset($this->resultados[$numeroPersonal])) {
+            $this->resultados[$numeroPersonal] = [
+                'suma_importe' => 0,
+                'suma_cantidad' => 0,
+                'fecha' => $mes,
+            ];
+        }
+
+        $this->resultados[$numeroPersonal]['suma_importe'] += (float) $importe;
+        $this->resultados[$numeroPersonal]['suma_cantidad'] += (float) $cantidad;
+
+        // Solo actualizar fecha si no está establecida
+        if (! $this->resultados[$numeroPersonal]['fecha'] && $mes) {
+            $this->resultados[$numeroPersonal]['fecha'] = $mes;
         }
     }
 
-    public function getResultados()
+    private function parseFechaNomina($fechaNomina): ?int
     {
-        return collect($this->resultados)
+        if (empty($fechaNomina)) {
+            return null;
+        }
+
+        try {
+            // Si ya es un DateTime, usarlo directamente
+            if ($fechaNomina instanceof \DateTime) {
+                return (int) $fechaNomina->format('m');
+            }
+
+            // Si es numérico (formato Excel)
+            if (is_numeric($fechaNomina)) {
+                $fecha = Date::excelToDateTimeObject($fechaNomina);
+
+                return (int) $fecha->format('m');
+            }
+
+            // Si es string, intentar parsear
+            if (is_string($fechaNomina)) {
+                return (int) Carbon::parse($fechaNomina)->month;
+            }
+        } catch (\Exception $e) {
+            // Log silencioso - no interrumpir el procesamiento
+        }
+
+        return null;
+    }
+
+    public function getResultados(): Collection
+    {
+        $result = collect($this->resultados)
             ->map(function ($valores, $clave) {
                 return [
                     'numero_de_personal' => $clave,
-                    'suma_importe' => $valores['suma_importe'],
-                    'suma_cantidad' => $valores['suma_cantidad'],
+                    'suma_importe' => round($valores['suma_importe'], 2),
+                    'suma_cantidad' => round($valores['suma_cantidad'], 2),
                     'fecha' => $valores['fecha'],
                 ];
             })
             ->sortByDesc('suma_importe')
             ->values();
+
+        // Limpiar memoria
+        $this->resultados = [];
+        gc_collect_cycles();
+
+        return $result;
+    }
+
+    public function chunkSize(): int
+    {
+        return 500; // Procesar en chunks de 500 filas
+    }
+
+    public function batchSize(): int
+    {
+        return 500; // Mismo tamaño para batch
+    }
+
+    public function getProcessedRows(): int
+    {
+        return $this->processedRows;
     }
 }
