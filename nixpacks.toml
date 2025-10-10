@@ -14,6 +14,10 @@ nixPkgs = [
 
 [phases.build]
 cmds = [
+  "mkdir -p /usr/local/bin/",
+  "echo '#!/bin/bash' > /usr/local/bin/php-horizon",
+  "echo '/usr/bin/php -c /assets/custom-php.ini -d memory_limit=1024M \"$@\"' >> /usr/local/bin/php-horizon",
+  "chmod +x /usr/local/bin/php-horizon",
   "mkdir -p /etc/supervisor/conf.d/",
   "cp /assets/worker-*.conf /etc/supervisor/conf.d/",
   "cp /assets/custom-php.ini /app/custom-php.ini",
@@ -92,7 +96,7 @@ stderr_logfile=/var/log/worker-phpfpm.log
 "worker-horizon.conf" = '''
 [program:worker-horizon]
 process_name=%(program_name)s_horizon
-command=php -c /assets/custom-php.ini /app/artisan horizon
+command=/usr/local/bin/php-horizon /app/artisan horizon
 autostart=true
 autorestart=true
 stdout_logfile=/var/log/horizon.log
