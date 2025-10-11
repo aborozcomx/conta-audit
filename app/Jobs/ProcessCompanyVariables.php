@@ -27,7 +27,7 @@ class ProcessCompanyVariables implements ShouldQueue
 
     public $timeout = 3600; // 1 hora
 
-    public $tries = 3;
+    public $tries = 12;
 
     public $memory = 512;
 
