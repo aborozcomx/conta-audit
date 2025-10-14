@@ -139,6 +139,13 @@ class ProcessCompanyVariables implements ShouldQueue
             $periods = $this->periodMap[$employeeR['fecha']] ?? [];
 
             if ($employee) {
+                Log::info('Employee', [
+                    'period' => $employeeR['fecha'],
+                    'employee_r' => $employeeR,
+                    'periods' => $periods,
+                    'employee' => $employee,
+                ]);
+
                 $days = $employeeR['suma_cantidad'];
                 $import = $employeeR['suma_importe'];
                 $sdi_variable = ($days <= 0 || $import <= 0) ? 0 : $import / $days;
