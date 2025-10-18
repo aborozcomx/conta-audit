@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Imports\CompanyVariable;
 use App\Models\Employee;
 use App\Models\EmployeeSalary;
+use App\Models\JobProgress;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -46,11 +47,14 @@ class ProcessCompanyVariables implements ShouldQueue
         12 => [1, 2],
     ];
 
-    public function __construct($file, $year, $company)
+    private $jobProgressId;
+
+    public function __construct($file, $year, $company, $jobProgressId = null)
     {
         $this->file = $file;
         $this->year = $year;
         $this->company = $company;
+        $this->jobProgressId = $jobProgressId;
     }
 
     public function tags(): array
@@ -65,6 +69,8 @@ class ProcessCompanyVariables implements ShouldQueue
 
     public function handle(): void
     {
+        $this->updateProgress(0, 'Iniciando procesamiento de variables de la CIA...');
+
         Log::info('Iniciando ProcessCompanyVariables', [
             'file' => $this->file,
             'year' => $this->year,
@@ -79,17 +85,29 @@ class ProcessCompanyVariables implements ShouldQueue
             Excel::import($import, $this->file);
             $resultados = $import->getResultados();
 
+            $this->updateProgress(30, 'Excel procesado, iniciando actualización de variables...', [
+                'total_empleados' => $resultados->count(),
+                'filas_procesadas' => $import->getProcessedRows(),
+            ]);
+
             if ($resultados->isEmpty()) {
                 Log::warning('No se encontraron resultados para procesar');
+                $this->updateProgress(100, 'No se encontraron resultados para procesar', [], 'completed');
 
                 return;
             }
 
             $this->processResultados($resultados);
 
+            $this->updateProgress(100, 'Procesamiento completado exitosamente', [], 'completed');
+
             Log::info('ProcessCompanyVariables completado exitosamente');
 
         } catch (\Exception $e) {
+            $this->updateProgress(0, 'Error en el procesamiento: '.$e->getMessage(), [
+                'error_trace' => $e->getTraceAsString(),
+            ], 'failed');
+
             Log::error('Error en ProcessCompanyVariables', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -104,10 +122,34 @@ class ProcessCompanyVariables implements ShouldQueue
 
     private function processResultados($resultados): void
     {
-        $chunks = $resultados->chunk(100); // Procesar en chunks de 100 empleados
+        $totalEmpleados = $resultados->count();
+        $chunkSize = 25; // Reducir chunk size para updates más frecuentes
+        $chunks = $resultados->chunk($chunkSize); // Procesar en chunks de 100 empleados
+        $totalChunks = $chunks->count();
+        $currentChunk = 0;
+        $empleadosProcesados = 0;
 
         foreach ($chunks as $chunkIndex => $chunk) {
             Log::debug("Procesando chunk {$chunkIndex}", ['size' => $chunk->count()]);
+            $currentChunk++;
+            $empleadosProcesados += $chunk->count();
+
+            // Calcular progreso: 30% (Excel) + 70% (procesamiento)
+            $progresoBase = 30;
+            $progresoProcesamiento = ($empleadosProcesados / $totalEmpleados) * 70;
+            $progresoTotal = (int) min($progresoBase + $progresoProcesamiento, 95);
+
+            $this->updateProgress(
+                $progresoTotal,
+                "Procesando variables CIA ({$empleadosProcesados}/{$totalEmpleados})...",
+                [
+                    'total_empleados' => $totalEmpleados,
+                    'empleados_procesados' => $empleadosProcesados,
+                    'chunk_actual' => $currentChunk,
+                    'total_chunks' => $totalChunks,
+                    'progreso_actual' => $progresoTotal,
+                ]
+            );
 
             $this->processChunk($chunk);
 
@@ -203,6 +245,29 @@ class ProcessCompanyVariables implements ShouldQueue
         }
 
         return $cases;
+    }
+
+    private function updateProgress(int $percentage, string $message = '', array $metadata = [], string $status = 'processing'): void
+    {
+        if (! $this->jobProgressId) {
+            return;
+        }
+
+        try {
+            JobProgress::findOrFail($this->jobProgressId)->update([
+                'progress_percentage' => $metadata['progreso_actual'] ?? $percentage,
+                'processed_rows' => $metadata['empleados_procesados'] ?? $percentage,
+                'message' => $message,
+                'metadata' => $metadata,
+                'status' => $status,
+                'updated_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error updating progress', [
+                'job_progress_id' => $this->jobProgressId,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function failed(Throwable $e): void

@@ -1,16 +1,16 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\EmployeeController;
-use App\Http\Controllers\VacationController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UmaController;
+use App\Http\Controllers\VacationController;
 use App\Http\Controllers\VariableController;
 use Illuminate\Foundation\Application;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use Illuminate\Http\Request;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -56,8 +56,9 @@ Route::middleware('auth')->group(function () {
     Route::get('companies/{company}/patronals', [CompanyController::class, 'getCompanyPatronals'])->name('company.patronals');
     Route::get('companies/{company}/patronals/create', [CompanyController::class, 'createPatronal'])->name('company.createPatronal');
     Route::post('calculate', [EmployeeController::class, 'calculate'])->name('employees.calculate');
+    Route::get('/company-variables/progress/{id}', [CompanyController::class, 'getProgress'])->name('company-variables.progress');
+    Route::get('/company-variables/progress/{id}/bar', [CompanyController::class, 'getProgressBar'])->name('company-variables.progressBar');
 });
-
 
 Route::post('/save-subscription', function (Request $request) {
     $user = auth()->user(); // Asegúrate de que el usuario esté autenticado
@@ -67,4 +68,4 @@ Route::post('/save-subscription', function (Request $request) {
         $request->keys['auth']
     );
 });
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

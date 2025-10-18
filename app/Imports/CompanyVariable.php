@@ -55,7 +55,6 @@ class CompanyVariable implements OnEachRow, WithBatchInserts, WithChunkReading, 
                 'fecha' => $mes,
             ];
         }
-
         $this->resultados[$numeroPersonal]['suma_importe'] += (float) $importe;
         $this->resultados[$numeroPersonal]['suma_cantidad'] += (float) $cantidad;
 
@@ -63,6 +62,7 @@ class CompanyVariable implements OnEachRow, WithBatchInserts, WithChunkReading, 
         if (! $this->resultados[$numeroPersonal]['fecha'] && $mes) {
             $this->resultados[$numeroPersonal]['fecha'] = $mes;
         }
+
     }
 
     private function parseFechaNomina($fechaNomina): ?int

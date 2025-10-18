@@ -8,6 +8,7 @@ use App\Jobs\Quotas;
 use App\Jobs\SendCfdiNotification;
 use App\Models\Company;
 use App\Models\EmployeePayroll;
+use App\Models\JobProgress;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
@@ -96,16 +97,23 @@ class CompanyController extends Controller
         //      new SendCfdiNotification(auth()->user(), $message)
         // ])->dispatch(auth()->user(), storage_path('app/' . $filePath), $request->year);
 
-        ProcessCFDI::dispatch(
-            auth()->user()->id,
-            storage_path('app/'.$filePath),
-            $request->year,
-            $message,
-            $company->id,
-            $uuid
-        );
+        // Crear registro de progreso
+        $jobProgress = JobProgress::create([
+            'job_id' => $uuid,
+            'type' => 'CDFIS',
+            'total_rows' => 0,
+            'processed_rows' => 0,
+            'progress_percentage' => 0,
+            'status' => JobProgress::STATUS_PROCESSING,
+            'message' => 'Iniciando procesamiento...',
+        ]);
 
-        return Redirect::route('employees.salaries')->with('message', 'Importando CFDIS');
+        ProcessCFDI::withChain([
+            new SendCfdiNotification(auth()->user(), $message),
+        ])->dispatch(auth()->user()->id, $filePath, $request->year, $message, $company->id, $uuid, $jobProgress->id);
+
+        // return Redirect::route('employees.salaries')->with('message', 'Importando CFDIS');
+        return Redirect::route('company-variables.progress', $jobProgress->id)->with('message', 'Importando CFDIS de la CIA');
     }
 
     public function uploadVariablesFile(Request $request, Company $company)
@@ -116,9 +124,20 @@ class CompanyController extends Controller
             'content' => 'Se ha terminado la importación de las variables de la compañía',
         ];
 
+        // Crear registro de progreso
+        $jobProgress = JobProgress::create([
+            'job_id' => Str::uuid(),
+            'type' => 'Variables CIA',
+            'total_rows' => 0,
+            'processed_rows' => 0,
+            'progress_percentage' => 0,
+            'status' => JobProgress::STATUS_PROCESSING,
+            'message' => 'Iniciando procesamiento...',
+        ]);
+
         ProcessCompanyVariables::withChain([
             new SendCfdiNotification(auth()->user(), $message),
-        ])->dispatch(storage_path('app/'.$filePath), $request->year, $company);
+        ])->dispatch(storage_path('app/'.$filePath), $request->year, $company, $jobProgress->id);
 
         // ProcessCompanyVariables::dispatch(
         //     storage_path('app/' . $filePath),
@@ -127,7 +146,31 @@ class CompanyController extends Controller
         //     $message
         // );
 
-        return Redirect::route('employees.salaries')->with('message', 'Importando Variables de la CIA');
+        return Redirect::route('company-variables.progress', $jobProgress->id)->with('message', 'Importando Variables de la CIA');
+    }
+
+    public function getProgress($id)
+    {
+        $progress = JobProgress::findOrFail($id);
+
+        return Inertia::render('Progress/Show', [
+            'progressId' => $progress->id,
+        ]);
+    }
+
+    public function getProgressBar($id)
+    {
+        $progress = JobProgress::findOrFail($id);
+
+        return response()->json([
+            'percentage' => $progress->progress_percentage,
+            'message' => $progress->message,
+            'type' => $progress->type,
+            'status' => $progress->status,
+            'metadata' => $progress->metadata,
+            'created_at' => $progress->created_at->toISOString(),
+            'updated_at' => $progress->updated_at->toISOString(),
+        ]);
     }
 
     public function uploadFilePayrolls(Request $request, Company $company)
@@ -140,16 +183,39 @@ class CompanyController extends Controller
 
         $uuid = Str::uuid();
 
-        Quotas::dispatch(
-            auth()->user()->id,
-            storage_path('app/'.$filePath),
-            $request->year,
-            $message,
-            $company->id,
-            $uuid
-        );
+        // Crear registro de progreso
+        $jobProgress = JobProgress::create([
+            'job_id' => $uuid,
+            'type' => 'Cuotas IMSS',
+            'total_rows' => 0,
+            'processed_rows' => 0,
+            'progress_percentage' => 0,
+            'status' => JobProgress::STATUS_PROCESSING,
+            'message' => 'Iniciando procesamiento...',
+        ]);
 
-        return Redirect::route('employees.showQuotas')->with('message', 'Importando Cuotas IMSS');
+        // Quotas::dispatch(
+        //     auth()->user()->id,
+        //     storage_path('app/'.$filePath),
+        //     $request->year,
+        //     $message,
+        //     $company->id,
+        //     $uuid
+        // );
+
+        Quotas::withChain([
+            new SendCfdiNotification(auth()->user(), $message),
+        ])->dispatch(auth()->user()->id, $filePath, $request->year, $message, $company->id, $uuid, $jobProgress->id);
+
+        // ProcessCompanyVariables::dispatch(
+        //     storage_path('app/' . $filePath),
+        //     $request->year,
+        //     auth()->user()->id,
+        //     $message
+        // );
+
+        return Redirect::route('company-variables.progress', $jobProgress->id)->with('message', 'Importando Cuotas IMSS de la CIA');
+
     }
 
     public function getPayrolls(Request $request): Response
