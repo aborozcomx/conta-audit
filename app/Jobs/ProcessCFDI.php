@@ -41,6 +41,8 @@ class ProcessCFDI implements ShouldQueue
 
     public $tries = 12;
 
+    public $queue = 'cfdis';
+
     public function __construct($user, $file, $year, $message, $company, $uuid, $progressId = null)
     {
         $this->user = $user;
@@ -50,6 +52,11 @@ class ProcessCFDI implements ShouldQueue
         $this->message = $message;
         $this->uuid = $uuid;
         $this->progressId = $progressId;
+
+        Log::info('🎯 ProcessCFDI - JOB CONSTRUCTED', [
+            'progress_id' => $progressId,
+            'queue' => $this->queue,
+        ]);
 
     }
 
@@ -84,6 +91,11 @@ class ProcessCFDI implements ShouldQueue
         //     ->chain([
         //         (new SendCfdiNotification($user2, $this->message))->onQueue('notifications'),
         //     ]);
+        Log::info('🚀 ProcessCFDI - JOB HANDLE STARTED', [
+            'attempt' => $this->attempts(),
+            'job_id' => $this->job->getJobId(),
+        ]);
+
         try {
             $company = Company::query()->findOrFail($this->company);
             $user = User::query()->findOrFail($this->user);
