@@ -189,7 +189,7 @@ return [
             'minProcesses' => 3,  // Mínimo para mantener performance
             'maxTime' => 0,
             'maxJobs' => 0,
-            'memory' => 256, // Reduce memoria por worker
+            'memory' => 1024, // Reduce memoria por worker
             'tries' => 3,    // Reduce reintentos
             'timeout' => 900, // Reduce timeout a 15min
             'nice' => 0,
