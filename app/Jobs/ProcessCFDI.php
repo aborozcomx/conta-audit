@@ -41,8 +41,6 @@ class ProcessCFDI implements ShouldQueue
 
     public $tries = 12;
 
-    public $queue = 'cfdis';
-
     public function __construct($user, $file, $year, $message, $company, $uuid, $progressId = null)
     {
         $this->user = $user;
@@ -57,6 +55,8 @@ class ProcessCFDI implements ShouldQueue
             'progress_id' => $progressId,
             'queue' => $this->queue,
         ]);
+
+        $this->onQueue('cfdis');
 
     }
 
