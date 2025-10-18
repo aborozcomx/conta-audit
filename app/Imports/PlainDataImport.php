@@ -404,7 +404,7 @@ class PlainDataImport implements OnEachRow, WithHeadingRow
 
     public function chunkSize(): int
     {
-        return 1000; // reduce si sigue consumiendo mucha memoria
+        return 200; // reduce si sigue consumiendo mucha memoria
     }
 
     public function __destruct()
