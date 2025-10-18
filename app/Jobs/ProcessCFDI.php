@@ -170,13 +170,15 @@ class ProcessCFDI implements ShouldQueue
     private function getTotalRows(): int
     {
         try {
-            Log::info('🔍 Getting total rows from file', ['file_path' => $this->file]);
-            $totalRows = Excel::toArray(new PlainDataImport($this->year, Company::find($this->company), $this->progressId), $this->file);
+            Log::info('🔍 Skipping exact row count for performance');
 
-            $count = count($totalRows[0] ?? []);
-            Log::info("📈 Total rows counted: {$count}");
+            // Estimación basada en tamaño de archivo
+            $fileSize = Storage::size($filePath);
+            $estimatedRows = max(100, intval($fileSize / 1000)); // Estimación conservadora
 
-            return $count;
+            Log::info("📊 Estimated rows: {$estimatedRows} (based on file size: {$fileSize} bytes)");
+
+            return $estimatedRows;
         } catch (\Exception $e) {
             Log::warning('No se pudo obtener el total de filas', [
                 'error' => $e->getMessage(),
