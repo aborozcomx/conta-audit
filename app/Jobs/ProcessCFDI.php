@@ -108,8 +108,8 @@ class ProcessCFDI implements ShouldQueue
             ]);
 
             // Verificar que el archivo existe
-            if (! Storage::disk('local')->exists($this->filePath)) {
-                throw new \Exception("El archivo no existe: {$this->filePath}");
+            if (! Storage::disk('local')->exists($this->file)) {
+                throw new \Exception("El archivo no existe: {$this->file}");
             }
 
             $fullPath = Storage::disk('local')->path($this->file);
