@@ -13,8 +13,9 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
-use Throwable;
+use Throwable; // ← Agrega esta línea
 
 class ProcessCFDI implements ShouldQueue
 {
@@ -93,26 +94,50 @@ class ProcessCFDI implements ShouldQueue
         //     ]);
         Log::info('🚀 ProcessCFDI - JOB HANDLE STARTED', [
             'attempt' => $this->attempts(),
-            'job_id' => $this->job->getJobId(),
+            'job_id' => $this->job ? $this->job->getJobId() : 'unknown',
+            'memory_at_start' => round(memory_get_usage(true) / 1024 / 1024, 2).' MB',
         ]);
 
         try {
             $company = Company::query()->findOrFail($this->company);
             $user = User::query()->findOrFail($this->user);
 
+            Log::info('✅ Company and user found', [
+                'company_id' => $company->id,
+                'user_id' => $user->id,
+            ]);
+
+            // Verificar que el archivo existe
+            if (! Storage::disk('local')->exists($this->filePath)) {
+                throw new \Exception("El archivo no existe: {$this->filePath}");
+            }
+
+            $fullPath = Storage::disk('local')->path($this->file);
+            Log::info('📁 File verified', [
+                'file_path' => $this->file,
+                'full_path' => $fullPath,
+                'file_size' => Storage::size($this->file),
+            ]);
+
             // Inicializar progreso si existe
             if ($this->progressId) {
+                Log::info('📊 Initializing progress');
                 $this->initializeProgress($company);
             }
 
             // Primero obtenemos el total de filas para el progreso
+            // Obtener total de filas
+            Log::info('🔢 Counting total rows...');
             $totalRows = $this->getTotalRows();
+            Log::info("📊 Total rows found: {$totalRows}");
 
-            if ($this->progressId) {
+            if ($this->progressId && $totalRows > 0) {
+                Log::info('🔄 Updating total rows in progress');
                 $this->updateTotalRows($totalRows);
             }
 
             // Ejecutar el import con el progressId
+            Log::info('🎯 Starting Excel import...');
             $import = new PlainDataImport($this->year, $company, $this->progressId);
             $import->setTotalRows($totalRows);
 
@@ -121,6 +146,7 @@ class ProcessCFDI implements ShouldQueue
                 $this->file
             );
 
+            Log::info('✅ ProcessCFDI - IMPORT COMPLETED SUCCESSFULLY');
             $import->markAsCompleted();
 
         } catch (\Exception $e) {
@@ -133,6 +159,7 @@ class ProcessCFDI implements ShouldQueue
             ]);
 
             if ($this->progressId) {
+                Log::info('🔄 Marking progress as failed');
                 $this->markProgressAsFailed('Error al procesar el archivo: '.$e->getMessage());
             }
 
@@ -143,9 +170,13 @@ class ProcessCFDI implements ShouldQueue
     private function getTotalRows(): int
     {
         try {
+            Log::info('🔍 Getting total rows from file', ['file_path' => $this->file]);
             $totalRows = Excel::toArray(new PlainDataImport($this->year, Company::find($this->company), $this->progressId), $this->file);
 
-            return count($totalRows[0] ?? []);
+            $count = count($totalRows[0] ?? []);
+            Log::info("📈 Total rows counted: {$count}");
+
+            return $count;
         } catch (\Exception $e) {
             Log::warning('No se pudo obtener el total de filas', [
                 'error' => $e->getMessage(),
