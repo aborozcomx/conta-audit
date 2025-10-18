@@ -243,7 +243,7 @@ class ProcessCFDI implements ShouldQueue
             'company_id' => $this->company,
             'year' => $this->year,
             'uuid' => $this->uuid,
-            'file' => $this->filePath,
+            'file' => $this->file,
             'error' => $e->getMessage(),
         ]);
 
