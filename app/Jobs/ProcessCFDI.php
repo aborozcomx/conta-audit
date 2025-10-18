@@ -173,7 +173,7 @@ class ProcessCFDI implements ShouldQueue
             Log::info('🔍 Skipping exact row count for performance');
 
             // Estimación basada en tamaño de archivo
-            $fileSize = Storage::size($filePath);
+            $fileSize = Storage::size($this->file);
             $estimatedRows = max(100, intval($fileSize / 1000)); // Estimación conservadora
 
             Log::info("📊 Estimated rows: {$estimatedRows} (based on file size: {$fileSize} bytes)");
