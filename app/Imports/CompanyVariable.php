@@ -17,7 +17,7 @@ class CompanyVariable implements OnEachRow, WithBatchInserts, WithChunkReading, 
 
     private $processedRows = 0;
 
-    private $maxRows = 32000; // Límite máximo de filas
+    private $maxRows = 35000; // Límite máximo de filas
 
     public function onRow(Row $row)
     {
