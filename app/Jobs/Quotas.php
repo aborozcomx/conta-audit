@@ -83,16 +83,39 @@ class Quotas implements ShouldQueue
                 $this->updateTotalRows($totalRows);
             }
 
-            // Ejecutar el import con el progressId
-            $import = new VariableImport($this->year, $this->progressId);
-            $import->setTotalRows($totalRows);
+            Log::info("🎯 Starting CHUNKED import of {$totalRows} rows");
 
-            Excel::import(
+            // CHUNK SIZE DINÁMICO - más pequeño para archivos grandes
+            $chunkSize = $this->calculateChunkSize($totalRows);
+            $totalChunks = ceil($totalRows / $chunkSize);
+
+            Log::info('🔧 Chunk configuration', [
+                'chunk_size' => $chunkSize,
+                'total_chunks' => $totalChunks,
+                'estimated_memory_per_chunk_mb' => round($chunkSize * 0.1, 2), // ~100KB por fila
+            ]);
+
+            for ($chunk = 1; $chunk <= $totalChunks; $chunk++) {
+                $this->processChunk($chunk, $totalChunks, $chunkSize, $totalRows, $this->file, $company);
+            }
+
+            // Marcar como completado
+            if ($this->progressId) {
+                $this->markAsCompleted($totalRows);
+            }
+
+            Log::info('✅ CHUNKED IMPORT COMPLETED SUCCESSFULLY');
+
+            // Ejecutar el import con el progressId
+            // $import = new VariableImport($this->year, $this->progressId);
+            // $import->setTotalRows($totalRows);
+
+            /* Excel::import(
                 $import,
                 $this->file
-            );
+            );*/
 
-            $import->markAsCompleted();
+            // $import->markAsCompleted();
         } catch (\Throwable $e) {
             // throw $th;
             Log::error('Cuotas IMSS failed in handle', [
@@ -110,6 +133,54 @@ class Quotas implements ShouldQueue
             throw $e;
         }
 
+    }
+
+    private function calculateChunkSize($totalRows): int
+    {
+        if ($totalRows > 20000) {
+            return 500;
+        }
+        if ($totalRows > 10000) {
+            return 1000;
+        }
+        if ($totalRows > 5000) {
+            return 2000;
+        }
+
+        return 3000;
+    }
+
+    private function processChunk($chunk, $totalChunks, $chunkSize, $totalRows, $fullPath, $company)
+    {
+        $startRow = (($chunk - 1) * $chunkSize) + 2;
+
+        Log::info("🔄 Processing chunk {$chunk}/{$totalChunks}", [
+            'start_row' => $startRow,
+            'chunk_size' => $chunkSize,
+        ]);
+
+        // Crear import SIN progressId - el Job maneja el progreso
+        $import = new VariableImport($this->year, null); // ← null aquí
+        $import->setTotalRows($totalRows);
+        $import->setChunkOffset($startRow);
+        $import->setChunkSize($chunkSize);
+
+        // Procesar el chunk
+        Excel::import($import, $fullPath);
+
+        // ACTUALIZAR PROGRESO GLOBAL basado en chunks completados
+        $processedRows = min($chunk * $chunkSize, $totalRows);
+        $percentage = round(($chunk / $totalChunks) * 100);
+
+        if ($this->progressId) {
+            $this->updateProgress($processedRows, $percentage, $chunk, $totalChunks);
+        }
+
+        // Limpiar memoria
+        unset($import);
+        gc_collect_cycles();
+
+        Log::info("✅ Chunk {$chunk} completed - Progress: {$percentage}%");
     }
 
     private function getTotalRows(): int
@@ -138,17 +209,15 @@ class Quotas implements ShouldQueue
                 'processed_rows' => 0,
                 'progress_percentage' => 0,
                 'status' => JobProgress::STATUS_PROCESSING,
-                'message' => 'Preparando importación de Cuotas IMSS...',
+                'message' => 'Preparando importación de las cuotas IMSS...',
                 'metadata' => [
                     'empleados_procesados' => 0,
                     'total_empleados' => 0,
-                    'errores' => [],
                     'company_id' => $company->id,
-                    'company_name' => $company->name,
                     'year' => $this->year,
-                    'uuid' => $this->uuid,
-                    'tipo' => 'CFDI',
                 ],
+                'company_id' => $company->id,
+                'user_id' => $this->user,
             ]
         );
     }
@@ -160,12 +229,40 @@ class Quotas implements ShouldQueue
             'metadata' => [
                 'empleados_procesados' => 0,
                 'total_empleados' => $totalRows,
-                'errores' => [],
                 'company_id' => $this->company,
-                'year' => $this->year,
-                'uuid' => $this->uuid,
-                'tipo' => 'CFDI',
             ],
+        ]);
+    }
+
+    private function updateProgress(int $processedRows, int $percentage, int $currentChunk, int $totalChunks): void
+    {
+        JobProgress::where('id', $this->progressId)->update([
+            'processed_rows' => $processedRows,
+            'progress_percentage' => $percentage,
+            'message' => "Procesando lote {$currentChunk}/{$totalChunks} ({$percentage}%)",
+            'metadata' => [
+                'empleados_procesados' => $processedRows,
+                'total_empleados' => $this->getTotalRows(),
+                'lote_actual' => $currentChunk,
+                'total_lotes' => $totalChunks,
+            ],
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function markAsCompleted(int $totalRows): void
+    {
+        JobProgress::where('id', $this->progressId)->update([
+            'status' => JobProgress::STATUS_COMPLETED,
+            'progress_percentage' => 100,
+            'message' => 'Importación completada exitosamente',
+            'processed_rows' => $totalRows,
+            'metadata' => [
+                'empleados_procesados' => $totalRows,
+                'total_empleados' => $totalRows,
+                'completado_en' => now()->toDateTimeString(),
+            ],
+            'updated_at' => now(),
         ]);
     }
 
