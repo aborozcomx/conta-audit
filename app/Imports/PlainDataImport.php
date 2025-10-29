@@ -31,10 +31,6 @@ class PlainDataImport implements OnEachRow, WithHeadingRow
 
     protected $errors = [];
 
-    protected $chunkOffset = 2;
-
-    protected $chunkSize = 1000;
-
     public function __construct($year, $company, $progressId = null)
     {
         $this->year = $year;
@@ -42,36 +38,17 @@ class PlainDataImport implements OnEachRow, WithHeadingRow
         $this->progressId = $progressId;
     }
 
-    public function setChunkOffset($offset)
-    {
-        $this->chunkOffset = $offset;
-    }
-
-    public function setChunkSize($size)
-    {
-        $this->chunkSize = $size;
-    }
-
     public function onRow(Row $row)
     {
-        $currentRowIndex = $row->getRowIndex();
-
-        // Solo procesar filas del chunk actual
-        if ($currentRowIndex < $this->chunkOffset) {
-            return;
-        }
-
-        if ($currentRowIndex >= $this->chunkOffset + $this->chunkSize) {
-            return;
-        }
+        $row = $row->toArray();
 
         // Incrementar contador de filas procesadas
         $this->processedRows++;
 
         // Actualizar progreso cada 50 filas para no saturar la base de datos
-        // if ($this->progressId && $this->processedRows % 200 === 0) {
-        //     $this->updateProgress();
-        // }
+        if ($this->progressId && $this->processedRows % 200 === 0) {
+            $this->updateProgress();
+        }
 
         $employee = Employee::firstOrCreate(
             ['social_number' => $row['numseguridadsocial']],

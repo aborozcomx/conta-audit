@@ -166,7 +166,7 @@ return [
     |
     */
 
-    'memory_limit' => 512,
+    'memory_limit' => 256,
 
     /*
     |--------------------------------------------------------------------------
@@ -185,10 +185,10 @@ return [
             'queue' => ['cfdis', 'notifications', 'cuotas', 'default'],
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
-            'maxProcesses' => 10, // Aumenta a 4x núcleos
-            'minProcesses' => 3,  // Mínimo para mantener performance
-            'maxTime' => 0,
-            'maxJobs' => 1,
+            'maxProcesses' => 4, // Aumenta a 4x núcleos
+            'minProcesses' => 1,  // Mínimo para mantener performance
+            'maxTime' => 3600,
+            'maxJobs' => 200,
             'memory' => 256, // Reduce memoria por worker
             'tries' => 3,    // Reduce reintentos
             'timeout' => 900, // Reduce timeout a 15min
@@ -199,10 +199,10 @@ return [
     'environments' => [
         'production' => [
             'supervisor-1' => [
-                'maxProcesses' => 10,
-                'minProcesses' => 3,
-                'balanceMaxShift' => 3,    // Permite escalado más agresivo
-                'balanceCooldown' => 2,
+                'maxProcesses' => 4,
+                'minProcesses' => 1,
+                'balanceMaxShift' => 1,    // Permite escalado más agresivo
+                'balanceCooldown' => 3,
             ],
         ],
 
