@@ -180,7 +180,7 @@ return [
     */
 
     'defaults' => [
-        'supervisor-1' => [
+        'notifications-supervisor' => [
             'connection' => 'redis',
             'queue' => ['notifications'],
             'balance' => 'auto',
