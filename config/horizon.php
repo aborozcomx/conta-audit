@@ -195,13 +195,8 @@ return [
         'production' => [
             // Supervisor para cfdis
             'notifications-supervisor' => [
-                'connection' => 'redis',
-                'queue' => ['notifications'],
-                'balance' => 'auto',
                 'maxProcesses' => 2,
                 'minProcesses' => 1,
-                'tries' => 3,
-                'timeout' => 300,
             ],
         ],
 
