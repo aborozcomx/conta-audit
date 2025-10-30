@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Imports\PlainDataImport;
-use App\Imports\RawCfdiImport;
 use App\Models\Company;
 use App\Models\JobProgress;
 use App\Models\User;
@@ -37,9 +36,9 @@ class ProcessCFDI implements ShouldQueue
 
     private $progressId;
 
-    public $timeout = 1200;
+    public $timeout = 600;
 
-    public $tries = 12;
+    public $tries = 5;
 
     public function __construct($user, $file, $year, $message, $company, $uuid, $progressId = null)
     {
@@ -69,61 +68,49 @@ class ProcessCFDI implements ShouldQueue
 
     public function handle(): void
     {
-        // $data = Excel::import(new PlainDataImport($this->year), $this->file);
-
-        // $company2 = Company::query()->findOrFail($this->company);
-        // /** @var User $user */
-        // $user2 = User::query()->findOrFail($this->user);
-
-        // Excel::queueImport(
-        //     // new RawCfdiImport($this->year, $this->user->id, $this->company->id, $this->uuid),
-        //     new PlainDataImport($this->year, $company2, $this->uuid),
-        //     $this->file
-        // )
-        //     ->onQueue('cfdis')
-        //     ->chain([
-        //         (new SendCfdiNotification($user2, $this->message))->onQueue('notifications'),
-        //     ]);
         try {
-            $company = Company::query()->findOrFail($this->company);
-            $user = User::query()->findOrFail($this->user);
-
-            // Inicializar progreso si existe
-            if ($this->progressId) {
-                $this->initializeProgress($company);
-            }
-
-            // Primero obtenemos el total de filas para el progreso
-            $totalRows = $this->getTotalRows();
+            $company = Company::findOrFail($this->company);
+            $user = User::findOrFail($this->user);
 
             if ($this->progressId) {
-                $this->updateTotalRows($totalRows);
+                JobProgress::updateOrCreate(['id' => $this->progressId], [
+                    'type' => 'CDFIS',
+                    'total_rows' => 0,
+                    'processed_rows' => 0,
+                    'progress_percentage' => 0,
+                    'status' => 'processing',
+                    'message' => 'Preparando importación...',
+                ]);
             }
 
-            // Ejecutar el import con el progressId
+            // Obtener total filas
+            $totalRows = count(Excel::toArray(new PlainDataImport($this->year, $company), $this->file)[0] ?? []);
+            if ($this->progressId) {
+                JobProgress::where('id', $this->progressId)->update(['total_rows' => $totalRows]);
+            }
+
+            // Importar
             $import = new PlainDataImport($this->year, $company, $this->progressId);
             $import->setTotalRows($totalRows);
+            Excel::import($import, $this->file);
 
-            Excel::import(
-                $import,
-                $this->file
-            );
+            // Finalizar buffer y progreso
+            $import->finalize();
 
-            $import->markAsCompleted();
-
-        } catch (\Exception $e) {
-            Log::error('ProcessCFDI failed in handle', [
-                'company_id' => $this->company,
-                'year' => $this->year,
-                'uuid' => $this->uuid,
-                'file' => $this->file,
-                'error' => $e->getMessage(),
+            JobProgress::where('id', $this->progressId)->update([
+                'status' => 'completed',
+                'progress_percentage' => 100,
+                'message' => 'Importación completada exitosamente',
             ]);
 
+        } catch (\Throwable $e) {
+            Log::error('ProcessCFDI failed', ['error' => $e->getMessage()]);
             if ($this->progressId) {
-                $this->markProgressAsFailed('Error al procesar el archivo: '.$e->getMessage());
+                JobProgress::where('id', $this->progressId)->update([
+                    'status' => 'failed',
+                    'message' => $e->getMessage(),
+                ]);
             }
-
             throw $e;
         }
     }

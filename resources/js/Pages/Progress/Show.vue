@@ -85,6 +85,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner'
 
 // Props
 const props = defineProps({
@@ -148,6 +149,7 @@ const startProgressTracking = () => {
 
       // Si el job terminó, limpiar el intervalo
       if (['completed', 'failed'].includes(data.status)) {
+        toast.success(`Se ha terminado la importación de ${currentProgress?.value.type}`);
         clearInterval(progressInterval.value)
         progressInterval.value = null
         emit('job-completed')

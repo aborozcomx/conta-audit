@@ -36,9 +36,9 @@ class Quotas implements ShouldQueue
 
     private $progressId;
 
-    public $timeout = 1200;
+    public $timeout = 600;
 
-    public $tries = 12;
+    public $tries = 5;
 
     public function __construct($user, $file, $year, $message, $company, $uuid, $progressId = null)
     {
@@ -71,40 +71,46 @@ class Quotas implements ShouldQueue
         try {
             $company = Company::query()->findOrFail($this->company);
             $user2 = User::query()->findOrFail($this->user);
+
             // Inicializar progreso si existe
             if ($this->progressId) {
-                $this->initializeProgress($company);
+                JobProgress::updateOrCreate(['id' => $this->progressId], [
+                    'type' => 'Cuotas IMSS',
+                    'total_rows' => 0,
+                    'processed_rows' => 0,
+                    'progress_percentage' => 0,
+                    'status' => 'processing',
+                    'message' => 'Preparando importación...',
+                ]);
             }
 
-            // Primero obtenemos el total de filas para el progreso
-            $totalRows = $this->getTotalRows();
-
+            // Obtener total filas
+            $totalRows = count(Excel::toArray(new VariableImport($this->year, $this->progressId), $this->file)[0] ?? []);
             if ($this->progressId) {
-                $this->updateTotalRows($totalRows);
+                JobProgress::where('id', $this->progressId)->update(['total_rows' => $totalRows]);
             }
 
             // Ejecutar el import con el progressId
             $import = new VariableImport($this->year, $this->progressId);
             $import->setTotalRows($totalRows);
+            Excel::import($import, $this->file);
 
-            Excel::import(
-                $import,
-                $this->file
-            );
+            // Finalizar buffer y progreso
+            $import->finalize();
 
-            $import->markAsCompleted();
+            JobProgress::where('id', $this->progressId)->update([
+                'status' => 'completed',
+                'progress_percentage' => 100,
+                'message' => 'Importación completada exitosamente',
+            ]);
         } catch (\Throwable $e) {
             // throw $th;
-            Log::error('Cuotas IMSS failed in handle', [
-                'company_id' => $this->company,
-                'year' => $this->year,
-                'uuid' => $this->uuid,
-                'file' => $this->file,
-                'error' => $e->getMessage(),
-            ]);
-
+            Log::error('Cuotas IMSS failed', ['error' => $e->getMessage()]);
             if ($this->progressId) {
-                $this->markProgressAsFailed('Error al procesar el archivo: '.$e->getMessage());
+                JobProgress::where('id', $this->progressId)->update([
+                    'status' => 'failed',
+                    'message' => $e->getMessage(),
+                ]);
             }
 
             throw $e;
@@ -187,6 +193,10 @@ class Quotas implements ShouldQueue
             'file' => $this->file,
             'error' => $e->getMessage(),
         ]);
+
+        if ($this->progressId) {
+            $this->markProgressAsFailed('Error fatal en el proceso: '.$e->getMessage());
+        }
 
         // Podrías notificar aquí también, o re-enfiletar una alerta
         // SendAdminAlert::dispatch(...);
