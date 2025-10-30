@@ -26,11 +26,9 @@ class ProcessCompanyVariables implements ShouldQueue
 
     private $company;
 
-    public $timeout = 3600; // 1 hora
+    public $timeout = 600; // 1 hora
 
-    public $tries = 12;
-
-    public $memory = 512;
+    public $tries = 5;
 
     private $periodMap = [
         1 => [3, 4],
@@ -60,11 +58,6 @@ class ProcessCompanyVariables implements ShouldQueue
     public function tags(): array
     {
         return ['variables', "year:{$this->year}"];
-    }
-
-    public function backoff(): array
-    {
-        return [120, 600]; // 2 min, 10 min
     }
 
     public function handle(): void
