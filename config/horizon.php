@@ -180,21 +180,22 @@ return [
     */
 
     'defaults' => [
-        'notifications-supervisor' => [
+        'supervisor-1' => [
             'connection' => 'redis',
             'queue' => ['notifications'],
             'balance' => 'auto',
-            'maxProcesses' => 2,
-            'minProcesses' => 1,
-            'tries' => 3,
-            'timeout' => 300,
+            'autoScalingStrategy' => 'time',
+            'maxProcesses' => 2, // Aumenta a 4x núcleos
+            'minProcesses' => 1,  // Mínimo para mantener performance
+            'tries' => 3,    // Reduce reintentos
+            'timeout' => 900, // Reduce timeout a 15min
         ],
     ],
 
     'environments' => [
         'production' => [
             // Supervisor para cfdis
-            'notifications-supervisor' => [
+            'supervisor-1' => [
                 'maxProcesses' => 2,
                 'minProcesses' => 1,
             ],
