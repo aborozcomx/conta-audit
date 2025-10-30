@@ -109,7 +109,7 @@ class CompanyController extends Controller
         ]);
 
         ProcessCFDI::withChain([
-            new SendCfdiNotification(auth()->user(), $message),
+            // new SendCfdiNotification(auth()->user(), $message),
         ])->onQueue('cfdis')->dispatch(auth()->user()->id, $filePath, $request->year, $message, $company->id, $uuid, $jobProgress->id);
 
         // return Redirect::route('employees.salaries')->with('message', 'Importando CFDIS');
@@ -136,8 +136,8 @@ class CompanyController extends Controller
         ]);
 
         ProcessCompanyVariables::withChain([
-            new SendCfdiNotification(auth()->user(), $message),
-        ])->onQueue('default')->dispatch(storage_path('app/'.$filePath), $request->year, $company, $jobProgress->id);
+            // new SendCfdiNotification(auth()->user(), $message),
+        ])->onQueue('variables')->dispatch(storage_path('app/'.$filePath), $request->year, $company, $jobProgress->id);
 
         // ProcessCompanyVariables::dispatch(
         //     storage_path('app/' . $filePath),
@@ -204,7 +204,7 @@ class CompanyController extends Controller
         // );
 
         Quotas::withChain([
-            new SendCfdiNotification(auth()->user(), $message),
+            // new SendCfdiNotification(auth()->user(), $message),
         ])->onQueue('cuotas')->dispatch(auth()->user()->id, $filePath, $request->year, $message, $company->id, $uuid, $jobProgress->id);
 
         // ProcessCompanyVariables::dispatch(
