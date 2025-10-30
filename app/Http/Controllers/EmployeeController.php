@@ -86,7 +86,7 @@ class EmployeeController extends Controller
         ];
 
         CalculateDifference::withChain([
-            // new SendCfdiNotification(auth()->user(), $message),
+            new SendCfdiNotification(auth()->user(), $message),
         ])->onQueue('calculate')->dispatch($company, $period, $year);
 
         return redirect()->back()->with('message', 'Calculando diferencia...');

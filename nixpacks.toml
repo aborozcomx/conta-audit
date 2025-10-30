@@ -173,6 +173,23 @@ stopasgroup=true
 killasgroup=true
 '''
 
+"queue-notifications.conf" = '''
+[program:queue-notifications]
+command=/root/.nix-profile/bin/php -c /assets/custom-php.ini -d memory_limit=1024M /app/artisan queue:work 'redis' --sleep=3 --daemon --quiet --timeout=1200 --tries=3 --queue='notifications'
+process_name=%(program_name)s_%(process_num)02d
+autostart=true
+autorestart=true
+user=forge
+numprocs=1
+redirect_stderr=true
+stdout_logfile=/var/log/queue-notifications.log
+stdout_logfile_maxbytes=5MB
+stdout_logfile_backups=3
+stopwaitsecs=15
+stopasgroup=true
+killasgroup=true
+'''
+
 "custom-php.ini" = '''
 memory_limit = 1024M
 max_execution_time = 300
