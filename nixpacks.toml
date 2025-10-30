@@ -111,7 +111,7 @@ command=/root/.nix-profile/bin/php -c /assets/custom-php.ini -d memory_limit=102
 process_name=%(program_name)s_%(process_num)02d
 autostart=true
 autorestart=true
-user=forge
+user=root
 numprocs=1
 redirect_stderr=true
 stdout_logfile=/var/log/queue-cfdis.log
@@ -128,7 +128,7 @@ command=/root/.nix-profile/bin/php -c /assets/custom-php.ini -d memory_limit=102
 process_name=%(program_name)s_%(process_num)02d
 autostart=true
 autorestart=true
-user=forge
+user=root
 numprocs=1
 redirect_stderr=true
 stdout_logfile=/var/log/queue-variables.log
@@ -145,7 +145,7 @@ command=/root/.nix-profile/bin/php -c /assets/custom-php.ini -d memory_limit=102
 process_name=%(program_name)s_%(process_num)02d
 autostart=true
 autorestart=true
-user=forge
+user=root
 numprocs=1
 redirect_stderr=true
 stdout_logfile=/var/log/queue-cuotas.log
@@ -162,7 +162,7 @@ command=/root/.nix-profile/bin/php -c /assets/custom-php.ini -d memory_limit=102
 process_name=%(program_name)s_%(process_num)02d
 autostart=true
 autorestart=true
-user=forge
+user=root
 numprocs=1
 redirect_stderr=true
 stdout_logfile=/var/log/queue-calculate.log
@@ -179,7 +179,7 @@ command=/root/.nix-profile/bin/php -c /assets/custom-php.ini -d memory_limit=102
 process_name=%(program_name)s_%(process_num)02d
 autostart=true
 autorestart=true
-user=forge
+user=root
 numprocs=1
 redirect_stderr=true
 stdout_logfile=/var/log/queue-notifications.log
