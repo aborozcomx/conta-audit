@@ -84,7 +84,7 @@ return [
     */
 
     'waits' => [
-        'redis:default' => 60,
+        'redis:notifications' => 60,
     ],
 
     /*
@@ -180,66 +180,28 @@ return [
     */
 
     'defaults' => [
-        'supervisor-1' => [
+        'notifications-supervisor' => [
             'connection' => 'redis',
-            'queue' => ['cfdis', 'notifications', 'cuotas', 'default'],
+            'queue' => ['notifications'],
             'balance' => 'auto',
-            'autoScalingStrategy' => 'time',
-            'maxProcesses' => 4,   // límite total de workers
+            'maxProcesses' => 2,
             'minProcesses' => 1,
-            'maxTime' => 3600,     // reinicia cada hora
-            'maxJobs' => 200,      // reinicia tras 200 jobs
-            'memory' => 256,
             'tries' => 3,
-            'timeout' => 900,
-            'nice' => 0,
+            'timeout' => 300,
         ],
     ],
 
     'environments' => [
         'production' => [
             // Supervisor para cfdis
-            'cfdis' => [
-                'connection' => 'redis',
-                'queue' => ['cfdis'],
-                'maxProcesses' => 2,
-                'minProcesses' => 1,
-                'balance' => 'simple',
-                'maxJobs' => 200,
-                'memory' => 256,
-            ],
-
-            // Supervisor para cuotas
-            'cuotas' => [
-                'connection' => 'redis',
-                'queue' => ['cuotas'],
-                'maxProcesses' => 1,
-                'minProcesses' => 1,
-                'balance' => 'simple',
-                'maxJobs' => 150,
-                'memory' => 256,
-            ],
-
-            // Supervisor para notificaciones
-            'notifications' => [
+            'notifications-supervisor' => [
                 'connection' => 'redis',
                 'queue' => ['notifications'],
-                'maxProcesses' => 1,
+                'balance' => 'auto',
+                'maxProcesses' => 2,
                 'minProcesses' => 1,
-                'balance' => 'simple',
-                'maxJobs' => 150,
-                'memory' => 256,
-            ],
-
-            // Supervisor para default
-            'default' => [
-                'connection' => 'redis',
-                'queue' => ['default'],
-                'maxProcesses' => 1,
-                'minProcesses' => 1,
-                'balance' => 'simple',
-                'maxJobs' => 150,
-                'memory' => 256,
+                'tries' => 3,
+                'timeout' => 300,
             ],
         ],
 

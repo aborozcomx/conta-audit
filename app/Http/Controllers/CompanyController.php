@@ -110,7 +110,7 @@ class CompanyController extends Controller
 
         ProcessCFDI::withChain([
             new SendCfdiNotification(auth()->user(), $message),
-        ])->dispatch(auth()->user()->id, $filePath, $request->year, $message, $company->id, $uuid, $jobProgress->id);
+        ])->onQueue('cfdis')->dispatch(auth()->user()->id, $filePath, $request->year, $message, $company->id, $uuid, $jobProgress->id);
 
         // return Redirect::route('employees.salaries')->with('message', 'Importando CFDIS');
         return Redirect::route('company-variables.progress', $jobProgress->id)->with('message', 'Importando CFDIS de la CIA');

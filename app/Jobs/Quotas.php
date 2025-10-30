@@ -36,7 +36,7 @@ class Quotas implements ShouldQueue
 
     private $progressId;
 
-    public $timeout = 600;
+    public $timeout = 900;
 
     public $tries = 5;
 
