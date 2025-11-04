@@ -21,13 +21,11 @@ class SendCfdiNotification implements ShouldQueue
 
     protected $message;
 
-    public $queue = 'notifications';
-
     public function __construct(User $user, array $message)
     {
         $this->user = $user;
         $this->message = $message;
-
+        $this->onQueue('notifications');
     }
 
     /**
