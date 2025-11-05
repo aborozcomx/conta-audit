@@ -93,6 +93,18 @@ stdout_logfile=/var/log/worker-phpfpm.log
 stderr_logfile=/var/log/worker-phpfpm.log
 '''
 
+"worker-horizon.conf" = '''
+[program:worker-horizon]
+process_name=%(program_name)s_horizon
+command=/root/.nix-profile/bin/php -c /assets/custom-php.ini -d memory_limit=1024M /app/artisan horizon
+autostart=true
+autorestart=true
+stdout_logfile=/var/log/horizon.log
+stopwaitsecs=120
+user=root
+numprocs=1
+'''
+
 "queue-cfdis.conf" = '''
 [program:queue-cfdis]
 command=/root/.nix-profile/bin/php -c /assets/custom-php.ini /app/artisan queue:work 'redis' --sleep=3 --timeout=1200 --tries=3 --queue='cfdis'
