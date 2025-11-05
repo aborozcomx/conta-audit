@@ -92,27 +92,14 @@ stdout_logfile=/var/log/worker-phpfpm.log
 stderr_logfile=/var/log/worker-phpfpm.log
 '''
 
-
-"worker-horizon.conf" = '''
-[program:worker-horizon]
-process_name=%(program_name)s_horizon
-command=/root/.nix-profile/bin/php -c /assets/custom-php.ini -d memory_limit=1024M /app/artisan horizon
-autostart=true
-autorestart=true
-stdout_logfile=/var/log/horizon.log
-stopwaitsecs=120
-user=root
-numprocs=1
-'''
-
 "queue-cfdis.conf" = '''
 [program:queue-cfdis]
-command=/root/.nix-profile/bin/php -c /assets/custom-php.ini -d memory_limit=1024M /app/artisan queue:work 'redis' --sleep=3 --daemon --quiet --timeout=1200 --tries=3 --queue='cfdis'
+command=/root/.nix-profile/bin/php -c /assets/custom-php.ini -d /app/artisan queue:work 'redis' --sleep=3 --timeout=1200 --tries=3 --queue='cfdis'
 process_name=%(program_name)s_%(process_num)02d
 autostart=true
 autorestart=true
 user=root
-numprocs=1
+numprocs=2
 redirect_stderr=true
 stdout_logfile=/var/log/queue-cfdis.log
 stdout_logfile_maxbytes=5MB
@@ -124,12 +111,12 @@ killasgroup=true
 
 "queue-variables.conf" = '''
 [program:queue-variables]
-command=/root/.nix-profile/bin/php -c /assets/custom-php.ini -d memory_limit=1024M /app/artisan queue:work 'redis' --sleep=3 --daemon --quiet --timeout=1200 --tries=3 --queue='variables'
+command=/root/.nix-profile/bin/php -c /assets/custom-php.ini -d /app/artisan queue:work 'redis' --sleep=3 --timeout=1200 --tries=3 --queue='variables'
 process_name=%(program_name)s_%(process_num)02d
 autostart=true
 autorestart=true
 user=root
-numprocs=1
+numprocs=2
 redirect_stderr=true
 stdout_logfile=/var/log/queue-variables.log
 stdout_logfile_maxbytes=5MB
@@ -141,12 +128,12 @@ killasgroup=true
 
 "queue-cuotas.conf" = '''
 [program:queue-cuotas]
-command=/root/.nix-profile/bin/php -c /assets/custom-php.ini -d memory_limit=1024M /app/artisan queue:work 'redis' --sleep=3 --daemon --quiet --timeout=1200 --tries=3 --queue='cuotas'
+command=/root/.nix-profile/bin/php -c /assets/custom-php.ini -d /app/artisan queue:work 'redis' --sleep=3 --timeout=1200 --tries=3 --queue='cuotas'
 process_name=%(program_name)s_%(process_num)02d
 autostart=true
 autorestart=true
 user=root
-numprocs=1
+numprocs=2
 redirect_stderr=true
 stdout_logfile=/var/log/queue-cuotas.log
 stdout_logfile_maxbytes=5MB
@@ -158,12 +145,12 @@ killasgroup=true
 
 "queue-calculate.conf" = '''
 [program:queue-calculate]
-command=/root/.nix-profile/bin/php -c /assets/custom-php.ini -d memory_limit=1024M /app/artisan queue:work 'redis' --sleep=3 --daemon --quiet --timeout=1200 --tries=3 --queue='calculate'
+command=/root/.nix-profile/bin/php -c /assets/custom-php.ini -d /app/artisan queue:work 'redis' --sleep=3 --timeout=1200 --tries=3 --queue='calculate'
 process_name=%(program_name)s_%(process_num)02d
 autostart=true
 autorestart=true
 user=root
-numprocs=1
+numprocs=2
 redirect_stderr=true
 stdout_logfile=/var/log/queue-calculate.log
 stdout_logfile_maxbytes=5MB
@@ -175,12 +162,12 @@ killasgroup=true
 
 "queue-notifications.conf" = '''
 [program:queue-notifications]
-command=/root/.nix-profile/bin/php -c /assets/custom-php.ini -d memory_limit=1024M /app/artisan queue:work 'redis' --sleep=3 --daemon --quiet --timeout=1200 --tries=3 --queue='notifications'
+command=/root/.nix-profile/bin/php -c /assets/custom-php.ini -d /app/artisan queue:work 'redis' --sleep=3 --timeout=1200 --tries=3 --queue='notifications'
 process_name=%(program_name)s_%(process_num)02d
 autostart=true
 autorestart=true
 user=root
-numprocs=1
+numprocs=2
 redirect_stderr=true
 stdout_logfile=/var/log/queue-notifications.log
 stdout_logfile_maxbytes=5MB
