@@ -78,7 +78,7 @@ class VariableImport implements OnEachRow, WithChunkReading, WithHeadingRow
         }
 
         // --- Actualizar salario ---
-        $salary = $employee->employee_salaries->first();
+        $salary = $employee->employee_salaries->where('period', $period)->where('year', $year)->first();
 
         if ($salary) {
             Log::info("Employee: {$employee}, Salary: {$salary}");
