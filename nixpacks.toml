@@ -107,7 +107,7 @@ numprocs=1
 
 "queue-cfdis.conf" = '''
 [program:queue-cfdis]
-command=/root/.nix-profile/bin/php -c /assets/custom-php.ini /app/artisan queue:work 'redis' --sleep=3 --timeout=1200 --tries=3 --queue='cfdis'
+command=/root/.nix-profile/bin/php -c /assets/custom-php.ini /app/artisan queue:work 'redis' --timeout=1200 --tries=12 --queue='cfdis'
 process_name=%(program_name)s_%(process_num)02d
 autostart=true
 autorestart=true
@@ -124,7 +124,7 @@ killasgroup=true
 
 "queue-variables.conf" = '''
 [program:queue-variables]
-command=/root/.nix-profile/bin/php -c /assets/custom-php.ini /app/artisan queue:work 'redis' --sleep=3 --timeout=1200 --tries=3 --queue='variables'
+command=/root/.nix-profile/bin/php -c /assets/custom-php.ini /app/artisan queue:work 'redis' --timeout=1200 --tries=12 --queue='variables'
 process_name=%(program_name)s_%(process_num)02d
 autostart=true
 autorestart=true
@@ -141,7 +141,7 @@ killasgroup=true
 
 "queue-cuotas.conf" = '''
 [program:queue-cuotas]
-command=/root/.nix-profile/bin/php -c /assets/custom-php.ini /app/artisan queue:work 'redis' --sleep=3 --timeout=1200 --tries=3 --queue='cuotas'
+command=/root/.nix-profile/bin/php -c /assets/custom-php.ini /app/artisan queue:work 'redis' --timeout=1200 --tries=12 --queue='cuotas'
 process_name=%(program_name)s_%(process_num)02d
 autostart=true
 autorestart=true
@@ -158,7 +158,7 @@ killasgroup=true
 
 "queue-calculate.conf" = '''
 [program:queue-calculate]
-command=/root/.nix-profile/bin/php -c /assets/custom-php.ini /app/artisan queue:work 'redis' --sleep=3 --timeout=1200 --tries=3 --queue='calculate'
+command=/root/.nix-profile/bin/php -c /assets/custom-php.ini /app/artisan queue:work 'redis' --timeout=1200 --tries=12 --queue='calculate'
 process_name=%(program_name)s_%(process_num)02d
 autostart=true
 autorestart=true
@@ -175,7 +175,7 @@ killasgroup=true
 
 "queue-notifications.conf" = '''
 [program:queue-notifications]
-command=/root/.nix-profile/bin/php -c /assets/custom-php.ini /app/artisan queue:work 'redis' --sleep=3 --timeout=1200 --tries=3 --queue='notifications'
+command=/root/.nix-profile/bin/php -c /assets/custom-php.ini /app/artisan queue:work 'redis' --timeout=1200 --tries=12 --queue='notifications'
 process_name=%(program_name)s_%(process_num)02d
 autostart=true
 autorestart=true
