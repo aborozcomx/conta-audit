@@ -86,13 +86,17 @@ class PlainDataImport implements OnEachRow, WithChunkReading, WithHeadingRow
             $age = $carbon->diff(new Carbon($employee->start_date));
             $vacation = $this->getVacation($age->y);
 
-            $sdi_tope = ($this->umas[$this->year] ?? $this->umas[$this->year - 1])->balance * 25;
+            $period = $row['periodo'];
+            $yearUma = ($period == 1 || $period == 2) ? $this->year - 1 : $this->year;
+            $uma = $this->umas[$yearUma] ?? null;
+
+            $sdi_tope = $uma->balance * 25;
 
             $daily_bonus = round($row['salariobasecotapor'] * $this->company->vacation_days / 365, 2);
             $vacation_bonus = round(($row['salariobasecotapor'] * ($vacation->days ?? 0)) * ($this->company->vacation_bonus / 100) / 365, 2);
 
             $this->salaryBuffer[] = [
-                'period' => $row['periodo'],
+                'period' => $period,
                 'year' => $this->year,
                 'employee_id' => $employee->id,
                 'category_id' => 1,
