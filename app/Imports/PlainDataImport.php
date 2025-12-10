@@ -10,10 +10,14 @@ use App\Models\Vacation;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Row;
+use PhpOffice\PhpSpreadsheet\Cell\Cell;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Cell\DefaultValueBinder;
 
-class PlainDataImport implements OnEachRow, WithChunkReading, WithHeadingRow
+class PlainDataImport extends DefaultValueBinder implements OnEachRow, WithChunkReading, WithCustomValueBinder, WithHeadingRow
 {
     protected $year;
 
@@ -46,6 +50,18 @@ class PlainDataImport implements OnEachRow, WithChunkReading, WithHeadingRow
 
         // Pre-cargar empleados existentes
         $this->employeesCache = Employee::where('company_id', $company->id)->get()->keyBy('social_number');
+    }
+
+    public function bindValue(Cell $cell, $value)
+    {
+        if (is_numeric($value)) {
+            $cell->setValueExplicit($value, DataType::TYPE_NUMERIC);
+
+            return true;
+        }
+
+        // else return default behavior
+        return parent::bindValue($cell, $value);
     }
 
     public function chunkSize(): int

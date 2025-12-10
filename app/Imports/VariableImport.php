@@ -9,10 +9,14 @@ use App\Models\Uma;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Row;
+use PhpOffice\PhpSpreadsheet\Cell\Cell;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Cell\DefaultValueBinder;
 
-class VariableImport implements OnEachRow, WithChunkReading, WithHeadingRow
+class VariableImport extends DefaultValueBinder implements OnEachRow, WithChunkReading, WithCustomValueBinder, WithHeadingRow
 {
     protected $year;
 
@@ -44,6 +48,18 @@ class VariableImport implements OnEachRow, WithChunkReading, WithHeadingRow
         $this->employeesCache = Employee::with('company')->get()->keyBy('social_number');
     }
 
+    public function bindValue(Cell $cell, $value)
+    {
+        if (is_numeric($value)) {
+            $cell->setValueExplicit($value, DataType::TYPE_NUMERIC);
+
+            return true;
+        }
+
+        // else return default behavior
+        return parent::bindValue($cell, $value);
+    }
+
     public function chunkSize(): int
     {
         return 500;
@@ -55,6 +71,8 @@ class VariableImport implements OnEachRow, WithChunkReading, WithHeadingRow
         $this->processedRows++;
 
         if (empty($row['sdi'])) {
+            Log::info("SDI: NSS: {$row['nss']}");
+
             return;
         }
 
@@ -81,7 +99,6 @@ class VariableImport implements OnEachRow, WithChunkReading, WithHeadingRow
         $salary = $employee->employee_salaries->where('period', $period)->where('year', $year)->first();
 
         if ($salary) {
-            Log::info("Employee: {$employee}, Salary: {$salary}");
             $sdi_quoted = $row['sdi'];
             $sdi_aud = $salary->sdi_aud;
             $difference = round($sdi_aud - $sdi_quoted, 2);
