@@ -6,6 +6,8 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from '@/Components/ui/navigation-menu'
+
+import { Link } from '@inertiajs/vue3'
 </script>
 
 <template>
@@ -41,6 +43,12 @@ import {
                 IMSS
             </NavigationMenuLink>
         </NavigationMenuItem>
+    </NavigationMenuList>
+
+    <NavigationMenuList>
+        <Link :href="route('logout')" :class="navigationMenuTriggerStyle()" method="post" class="bg-red-700 text-white hover:bg-red-500" :active="$page.url.startsWith('/quotas')" as="button">
+                Cerrar Sesión
+            </Link>
     </NavigationMenuList>
   </NavigationMenu>
 </template>
