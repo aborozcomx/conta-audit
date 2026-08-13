@@ -5,6 +5,7 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UmaController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\VacationController;
 use App\Http\Controllers\VariableController;
 use Illuminate\Foundation\Application;
@@ -58,6 +59,7 @@ Route::middleware('auth')->group(function () {
     Route::post('calculate', [EmployeeController::class, 'calculate'])->name('employees.calculate');
     Route::get('/company-variables/progress/{id}', [CompanyController::class, 'getProgress'])->name('company-variables.progress');
     Route::get('/company-variables/progress/{id}/bar', [CompanyController::class, 'getProgressBar'])->name('company-variables.progressBar');
+    Route::resource('/users', UserController::class);
 });
 
 Route::post('/save-subscription', function (Request $request) {
