@@ -14,6 +14,11 @@ import { Link } from '@inertiajs/vue3'
   <NavigationMenu class="max-w-full p-4">
     <NavigationMenuList>
         <NavigationMenuItem>
+            <NavigationMenuLink :href="route('users.index')" :class="navigationMenuTriggerStyle()" :active="$page.url.startsWith('/users')">
+                Usuarios
+            </NavigationMenuLink>
+        </NavigationMenuItem>
+        <NavigationMenuItem>
             <NavigationMenuLink :href="route('umas.index')" :class="navigationMenuTriggerStyle()" :active="$page.url.startsWith('/umas')">
                 UMAS
             </NavigationMenuLink>
